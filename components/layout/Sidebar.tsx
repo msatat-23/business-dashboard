@@ -78,7 +78,7 @@ export function Sidebar({ activeTab, onSelectTab, onShowToast, onClose }: Sideba
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -12 }}
       transition={{ duration: 0.2 }}
-      className="w-full lg:w-68 bg-white border border-slate-200/90 rounded-3xl p-4.5 flex flex-col justify-between gap-6 shrink-0 shadow-sm relative"
+      className="w-full lg:w-68 bg-white border border-slate-200/90 rounded-3xl p-4.5 flex flex-col justify-between gap-6 shrink-0 shadow-sm relative h-[80vh]"
     >
       <div className="flex flex-col gap-3">
         {/* Navigation Header with Close Button */}
@@ -115,11 +115,10 @@ export function Sidebar({ activeTab, onSelectTab, onShowToast, onClose }: Sideba
                 onClick={() => {
                   if (onSelectTab) onSelectTab(item.id);
                 }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#f43f5e] via-[#e11d48] to-[#9333ea] text-white shadow-md shadow-[#f43f5e]/20 scale-[1.01]'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                }`}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${isActive
+                  ? 'bg-gradient-to-r from-[#f43f5e] via-[#e11d48] to-[#9333ea] text-white shadow-md shadow-[#f43f5e]/20 scale-[1.01]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  }`}
               >
                 <div className="flex items-center gap-3 truncate min-w-0">
                   <Icon size={17} className={isActive ? 'text-white' : 'text-slate-500'} />
