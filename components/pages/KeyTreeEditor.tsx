@@ -52,7 +52,7 @@ const TYPE_OPTIONS: SelectOption<KeyType>[] = [
 ];
 
 const ARRAY_ITEM_OPTIONS: SelectOption<'text' | 'image' | 'object'>[] = [
-  { value: 'text', label: 'Rich Text', icon: <Type size={14} className="text-blue-400" /> },
+  { value: 'text', label: 'Text', icon: <Type size={14} className="text-blue-400" /> },
   { value: 'image', label: 'Image', icon: <ImageIcon size={14} className="text-purple-400" /> },
   { value: 'object', label: 'Group', icon: <FolderTree size={14} className="text-amber-400" /> },
 ];
@@ -283,7 +283,6 @@ function NodeEditorRow({
   mode?: "create" | "edit"
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
-  console.log(mode)
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs transition-all hover:border-slate-300">
       {/* Node Row Header */}
