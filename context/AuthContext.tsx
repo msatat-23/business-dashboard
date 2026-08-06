@@ -20,7 +20,6 @@ interface AuthContextType {
   contacts: Contact[];
   login: (email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
-  switchRole: (role: UserRole) => void;
   createUser: (newUser: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => { success: boolean; message: string };
   updateUser: (id: string, updatedFields: Partial<User>) => { success: boolean; message: string };
   deleteUser: (id: string) => { success: boolean; message: string };
@@ -123,30 +122,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('business_dev_session_email');
       localStorage.removeItem('business_dev_access_token');
-    }
-  };
-
-  const switchRole = (role: UserRole) => {
-    let targetUser = users.find((u) => u.role === role && u.isActive);
-    if (!targetUser) {
-      // Create quick temporary persona if none exists
-      targetUser = {
-        id: crypto.randomUUID(),
-        fullName: `${role.toUpperCase()} Persona`,
-        email: `${role}@business-dev.com`,
-        password: `${role}Pass123!`,
-        role: role,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      const updatedUsers = [targetUser, ...users];
-      setUsers(updatedUsers);
-      saveUsers(updatedUsers);
-    }
-    setCurrentUser(targetUser);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('business_dev_session_email', targetUser.email);
     }
   };
 
@@ -329,7 +304,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         contacts,
         login,
         logout,
-        switchRole,
         createUser,
         updateUser,
         deleteUser,

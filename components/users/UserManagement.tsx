@@ -38,7 +38,7 @@ interface UserManagementProps {
 export function UserManagement({ onShowToast }: UserManagementProps) {
   const { showToast: ctxToast } = useToast();
   const showToast = onShowToast || ctxToast;
-  const { currentUser, switchRole } = useAuth();
+  const { currentUser } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -94,7 +94,6 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const isAdmin = currentUser?.role === 'admin';
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -123,37 +122,6 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
 
   const paginatedUsers = users;
 
-  if (!isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 sm:p-16 my-8 bg-white border border-slate-200/90 rounded-3xl text-center max-w-3xl mx-auto shadow-md">
-        <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-[#e11d48] mb-5 shadow-xs">
-          <Lock size={32} />
-        </div>
-        <span className="bg-rose-50 border border-rose-200 text-[#e11d48] px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-          Restricted Directory
-        </span>
-        <h2 className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mb-3">
-          Admin Privilege Required
-        </h2>
-        <p className="font-sans text-sm text-slate-600 max-w-lg mb-6 leading-relaxed">
-          User account management, credential provisioning, and role assignment can only be accessed by system Administrators.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <button
-            onClick={() => {
-              switchRole('admin');
-              showToast('Switched to Administrator account!', 'success');
-            }}
-            className="bg-gradient-to-r from-[#f43f5e] via-[#e11d48] to-[#9333ea] text-white px-6 py-3 rounded-xl font-sans text-xs font-bold cursor-pointer shadow-[0_4px_15px_rgba(244,63,94,0.3)] hover:shadow-[0_6px_22px_rgba(244,63,94,0.45)] transition-all flex items-center gap-2"
-          >
-            <span>Switch Session to Admin</span>
-            <ArrowRight size={15} />
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const handleOpenCreateModal = () => {
     setSelectedUser(null);

@@ -13,27 +13,12 @@ interface HeaderProps {
 }
 
 export function Header({ onShowToast, isSidebarOpen = true, onToggleSidebar }: HeaderProps) {
-  const { currentUser, logout, switchRole } = useAuth();
+  const { currentUser, logout } = useAuth();
   const { showToast: ctxToast } = useToast();
   const showToast = onShowToast || ctxToast;
-  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
-  const handleRoleSelect = (role: UserRole) => {
-    switchRole(role);
-    setRoleDropdownOpen(false);
-    showToast(`Switched active session persona to ${role.toUpperCase()}`, 'info');
-  };
 
-  const getRoleBadgeClass = (role?: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-rose-50 text-[#e11d48] border-rose-200 hover:bg-rose-100';
-      case 'editor':
-        return 'bg-purple-50 text-[#9333ea] border-purple-200 hover:bg-purple-100';
-      default:
-        return 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100';
-    }
-  };
+
 
   return (
     <header className="sticky top-0 z-40 backdrop-blur-md bg-white/90 border-b border-slate-200/90 transition-all duration-300">
