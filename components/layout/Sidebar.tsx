@@ -23,9 +23,10 @@ interface SidebarProps {
   onSelectTab?: (tab: NavTab) => void;
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
   onClose?: () => void;
+  isOpen?: boolean;
 }
 
-export function Sidebar({ activeTab, onSelectTab, onShowToast, onClose }: SidebarProps) {
+export function Sidebar({ activeTab, onSelectTab, onShowToast, onClose, isOpen = true }: SidebarProps) {
   const { currentUser, logout } = useAuth();
   const pathname = usePathname();
   const isAdmin = currentUser?.role === 'admin';
@@ -73,12 +74,9 @@ export function Sidebar({ activeTab, onSelectTab, onShowToast, onClose }: Sideba
   };
 
   return (
-    <motion.aside
-      initial={{ opacity: 0, x: -12 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -12 }}
-      transition={{ duration: 0.2 }}
-      className="w-full lg:w-68 bg-white border border-slate-200/90 rounded-3xl p-4.5 flex flex-col justify-between gap-6 shrink-0 shadow-sm relative h-[80vh]"
+    <aside
+      className={`fixed top-16 left-0 bottom-0 w-70 bg-white border-r border-slate-200/90 p-4.5 flex flex-col justify-between gap-6 shrink-0 shadow-sm z-30 transition-transform duration-300 ease-in-out overflow-y-auto ${isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
     >
       <div className="flex flex-col gap-3">
         {/* Navigation Header with Close Button */}
@@ -97,7 +95,7 @@ export function Sidebar({ activeTab, onSelectTab, onShowToast, onClose }: Sideba
               className="p-1.5 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
               title="Close Navigation Menu"
             >
-              <X size={16} />
+              <X size={20} />
             </button>
           )}
         </div>
@@ -115,7 +113,7 @@ export function Sidebar({ activeTab, onSelectTab, onShowToast, onClose }: Sideba
                 onClick={() => {
                   if (onSelectTab) onSelectTab(item.id);
                 }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${isActive
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-[14px] font-bold transition-all cursor-pointer ${isActive
                   ? 'bg-gradient-to-r from-[#f43f5e] via-[#e11d48] to-[#9333ea] text-white shadow-md shadow-[#f43f5e]/20 scale-[1.01]'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`}
@@ -178,6 +176,6 @@ export function Sidebar({ activeTab, onSelectTab, onShowToast, onClose }: Sideba
           <span>Sign Out</span>
         </button>
       </div>
-    </motion.aside>
+    </aside>
   );
 }

@@ -117,13 +117,9 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
   }, [searchTerm, roleFilter, statusFilter]);
 
   // Extract total from paginated response
-  const totalItems = useMemo(() => {
-    if (!apiResponse) return 0;
-    if (Array.isArray(apiResponse)) return apiResponse.length;
-    return (apiResponse as any)?.total || 0;
-  }, [apiResponse]);
+  const totalItems = apiResponse?.meta.total ?? 0;
 
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const totalPages = apiResponse?.meta.pageCount ?? 0;
 
   const paginatedUsers = users;
 

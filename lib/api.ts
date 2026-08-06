@@ -209,9 +209,9 @@ export async function createPageApi(payload: {
     slug: string;
     content: Record<string, any>;
 }): Promise<PageApiRecord> {
-    return apiRequest<PageApiRecord>('/pages', {
-        method: 'POST',
-        body: JSON.stringify(payload),
+    return apiRequest<PageApiRecord>(`/pages/${payload.slug}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ content: payload.content }),
     });
 }
 

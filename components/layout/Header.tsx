@@ -44,11 +44,10 @@ export function Header({ onShowToast, isSidebarOpen = true, onToggleSidebar }: H
             <button
               type="button"
               onClick={onToggleSidebar}
-              className={`p-2 rounded-xl border transition-all cursor-pointer shrink-0 flex items-center justify-center ${
-                !isSidebarOpen
-                  ? 'bg-rose-50 text-[#e11d48] border-rose-200 shadow-2xs hover:bg-rose-100 ring-2 ring-rose-500/20'
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
-              }`}
+              className={`p-2 rounded-xl border transition-all cursor-pointer shrink-0 flex items-center justify-center ${!isSidebarOpen
+                ? 'bg-rose-50 text-[#e11d48] border-rose-200 shadow-2xs hover:bg-rose-100 ring-2 ring-rose-500/20'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                }`}
               title={isSidebarOpen ? 'Close Navigation Sidebar' : 'Open Navigation Sidebar'}
             >
               <PanelLeft size={18} />
@@ -71,48 +70,6 @@ export function Header({ onShowToast, isSidebarOpen = true, onToggleSidebar }: H
 
         {/* Right Controls */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Quick Role Switcher Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setRoleDropdownOpen((prev) => !prev)}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border text-[0.7rem] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${getRoleBadgeClass(
-                currentUser?.role
-              )}`}
-            >
-              <Shield size={13} className="shrink-0" />
-              <span className="uppercase">{currentUser?.role || 'Guest'}</span>
-              <ChevronDown size={13} className="shrink-0" />
-            </button>
-
-            {roleDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-2xl p-2 shadow-xl z-50 flex flex-col gap-1 text-slate-800">
-                <div className="text-[0.65rem] text-slate-400 uppercase font-extrabold px-3 py-1 tracking-wider border-b border-slate-100">
-                  Switch Active Role
-                </div>
-                <button
-                  onClick={() => handleRoleSelect('admin')}
-                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer"
-                >
-                  <span className="text-[#e11d48]">ADMIN (Full)</span>
-                  {currentUser?.role === 'admin' && <Check size={14} className="text-[#e11d48]" />}
-                </button>
-                <button
-                  onClick={() => handleRoleSelect('editor')}
-                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer"
-                >
-                  <span className="text-[#9333ea]">EDITOR (Pages)</span>
-                  {currentUser?.role === 'editor' && <Check size={14} className="text-[#9333ea]" />}
-                </button>
-                <button
-                  onClick={() => handleRoleSelect('user')}
-                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer"
-                >
-                  <span className="text-blue-600">USER (Read Only)</span>
-                  {currentUser?.role === 'user' && <Check size={14} className="text-blue-600" />}
-                </button>
-              </div>
-            )}
-          </div>
 
           {/* User Profile Summary - Hidden on mobile, compact on desktop */}
           <div className="hidden sm:flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-xl">

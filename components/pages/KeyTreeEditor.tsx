@@ -40,20 +40,21 @@ export interface ArrayItemNode {
 interface KeyTreeEditorProps {
   nodes: KeyNode[];
   onChange: (nodes: KeyNode[]) => void;
+  mode?: "create" | "edit"
 }
 
 // Key type select options with icons
 const TYPE_OPTIONS: SelectOption<KeyType>[] = [
-  { value: 'text', label: 'Rich Text', icon: <Type size={14} className="text-blue-400" /> },
+  { value: 'text', label: 'Text', icon: <Type size={14} className="text-blue-400" /> },
   { value: 'image', label: 'Image', icon: <ImageIcon size={14} className="text-purple-400" /> },
-  { value: 'object', label: 'Object', icon: <FolderTree size={14} className="text-amber-400" /> },
-  { value: 'array', label: 'Array', icon: <ListFilter size={14} className="text-emerald-400" /> },
+  { value: 'object', label: 'Group', icon: <FolderTree size={14} className="text-amber-400" /> },
+  { value: 'array', label: 'List', icon: <ListFilter size={14} className="text-emerald-400" /> },
 ];
 
 const ARRAY_ITEM_OPTIONS: SelectOption<'text' | 'image' | 'object'>[] = [
   { value: 'text', label: 'Rich Text', icon: <Type size={14} className="text-blue-400" /> },
   { value: 'image', label: 'Image', icon: <ImageIcon size={14} className="text-purple-400" /> },
-  { value: 'object', label: 'Object', icon: <FolderTree size={14} className="text-amber-400" /> },
+  { value: 'object', label: 'Group', icon: <FolderTree size={14} className="text-amber-400" /> },
 ];
 
 export function generateId(): string {
@@ -137,7 +138,7 @@ export function recordToTree(obj: Record<string, any>): KeyNode[] {
   });
 }
 
-export function KeyTreeEditor({ nodes, onChange }: KeyTreeEditorProps) {
+export function KeyTreeEditor({ nodes, onChange, mode = "create" }: KeyTreeEditorProps) {
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyType, setNewKeyType] = useState<KeyType>('text');
 
@@ -169,6 +170,7 @@ export function KeyTreeEditor({ nodes, onChange }: KeyTreeEditorProps) {
   };
 
   const handleDeleteNode = (id: string) => {
+    if (mode === "edit") return;
     onChange(nodes.filter((n) => n.id !== id));
   };
 
@@ -254,6 +256,7 @@ export function KeyTreeEditor({ nodes, onChange }: KeyTreeEditorProps) {
               onUpdate={(updated) => handleUpdateNode(node.id, updated)}
               onDelete={() => handleDeleteNode(node.id)}
               onMove={(dir) => handleMoveNode(index, dir)}
+              mode={mode}
             />
           ))}
         </div>
@@ -269,6 +272,7 @@ function NodeEditorRow({
   onUpdate,
   onDelete,
   onMove,
+  mode
 }: {
   node: KeyNode;
   index: number;
@@ -276,9 +280,10 @@ function NodeEditorRow({
   onUpdate: (updated: KeyNode) => void;
   onDelete: () => void;
   onMove: (direction: 'up' | 'down') => void;
+  mode?: "create" | "edit"
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
-
+  console.log(mode)
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs transition-all hover:border-slate-300">
       {/* Node Row Header */}
@@ -340,14 +345,17 @@ function NodeEditorRow({
             <MoveDown size={14} />
           </button>
           <div className="w-[1px] h-4 bg-slate-300 mx-1" />
-          <button
-            type="button"
-            onClick={onDelete}
-            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
-            title="Delete Key"
-          >
-            <Trash2 size={14} />
-          </button>
+          {
+            mode === "create" &&
+            <button
+              type="button"
+              onClick={onDelete}
+              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+              title="Delete Key"
+            >
+              <Trash2 size={14} />
+            </button>
+          }
         </div>
       </div>
 
@@ -381,6 +389,7 @@ function NodeEditorRow({
               nodes={node.valueObject || []}
               onChange={(childNodes) => onUpdate({ ...node, valueObject: childNodes })}
               parentKey={node.key}
+              mode={mode}
             />
           )}
 
@@ -389,6 +398,7 @@ function NodeEditorRow({
               items={node.valueArray || []}
               onChange={(items) => onUpdate({ ...node, valueArray: items })}
               parentKey={node.key}
+              mode={mode}
             />
           )}
         </div>
@@ -402,10 +412,12 @@ function NestedObjectEditor({
   nodes,
   onChange,
   parentKey,
+  mode
 }: {
   nodes: KeyNode[];
   onChange: (nodes: KeyNode[]) => void;
   parentKey: string;
+  mode?: "create" | "edit"
 }) {
   const [nestedKeyName, setNestedKeyName] = useState('');
   const [nestedKeyType, setNestedKeyType] = useState<KeyType>('text');
@@ -498,6 +510,7 @@ function NestedObjectEditor({
                 copy[targetIdx] = tmp;
                 onChange(copy);
               }}
+              mode={mode}
             />
           ))}
         </div>
@@ -511,10 +524,12 @@ function NestedArrayEditor({
   items,
   onChange,
   parentKey,
+  mode
 }: {
   items: ArrayItemNode[];
   onChange: (items: ArrayItemNode[]) => void;
   parentKey: string;
+  mode?: "create" | "edit"
 }) {
   const [arrayItemType, setArrayItemType] = useState<'text' | 'image' | 'object'>('text');
   const [elementCountInput, setElementCountInput] = useState<string>(String(items.length));
@@ -623,7 +638,7 @@ function NestedArrayEditor({
         </div>
       ) : (
         <div className="space-y-3">
-          {items.map((item, idx) => (
+          {items.map((item: any, idx: any) => (
             <div
               key={item.id}
               className="bg-white border border-slate-200/90 rounded-xl p-3.5 space-y-3 shadow-2xs hover:border-slate-300 transition-colors"
@@ -641,11 +656,11 @@ function NestedArrayEditor({
                         items.map((it) =>
                           it.id === item.id
                             ? {
-                                ...it,
-                                type: newType as 'text' | 'image' | 'object',
-                                valueText: it.valueText || it.valueImage || '',
-                                valueImage: it.valueImage || it.valueText || '',
-                              }
+                              ...it,
+                              type: newType as 'text' | 'image' | 'object',
+                              valueText: it.valueText || it.valueImage || '',
+                              valueImage: it.valueImage || it.valueText || '',
+                            }
                             : it
                         )
                       );
@@ -698,6 +713,7 @@ function NestedArrayEditor({
                     )
                   }
                   parentKey={`${parentKey}[${idx}]`}
+                  mode={mode}
                 />
               )}
             </div>
