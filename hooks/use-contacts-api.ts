@@ -10,12 +10,18 @@ import {
 } from '@/lib/api';
 import type { ContactStatus } from '@/lib/types';
 
-const CONTACTS_QUERY_KEY = ['contacts'];
+const CONTACTS_QUERY_KEY = 'contacts';
 
-export function useContactsQuery() {
+
+export function useContactsQuery(params?: {
+    contactStatus?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+}) {
     return useQuery({
-        queryKey: CONTACTS_QUERY_KEY,
-        queryFn: getContactsApi,
+        queryKey: [CONTACTS_QUERY_KEY, params].filter(Boolean),
+        queryFn: () => getContactsApi(params),
     });
 }
 
@@ -25,7 +31,7 @@ export function useCreateContactMutation() {
     return useMutation({
         mutationFn: createContactApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: CONTACTS_QUERY_KEY });
+            queryClient.invalidateQueries({ queryKey: [CONTACTS_QUERY_KEY] });
         },
     });
 }
@@ -37,7 +43,7 @@ export function useUpdateContactStatusQuery() {
         mutationFn: ({ id, contactStatus }: { id: string; contactStatus: ContactStatus }) =>
             updateContactStatusApi(id, contactStatus),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: CONTACTS_QUERY_KEY });
+            queryClient.invalidateQueries({ queryKey: [CONTACTS_QUERY_KEY] });
         },
     });
 }
@@ -48,7 +54,7 @@ export function useDeleteContactMutation() {
     return useMutation({
         mutationFn: deleteContactApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: CONTACTS_QUERY_KEY });
+            queryClient.invalidateQueries({ queryKey: [CONTACTS_QUERY_KEY] });
         },
     });
 }

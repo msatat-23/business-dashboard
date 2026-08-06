@@ -27,6 +27,16 @@ export interface AuthLoginResponse {
     };
 }
 
+export interface PaginatedResponse<T> {
+    items: T[];
+    meta: {
+        total: number;
+        page: number;
+        pageCount: number;
+        pageSize: number;
+    };
+}
+
 export interface UserApiRecord {
     id: string;
     fullName: string;
@@ -65,6 +75,8 @@ export interface AdminStatsApiRecord {
     contacts: number;
 }
 
+
+
 async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers = new Headers(options.headers || {});
     headers.set('Content-Type', 'application/json');
@@ -81,6 +93,7 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
         headers,
     });
     console.log(response)
+
     if (!response.ok) {
         let payload: ApiError | undefined;
         try {
@@ -111,8 +124,23 @@ export async function loginWithApi(payload: {
     });
 }
 
-export async function getUsersApi(): Promise<UserApiRecord[]> {
-    return apiRequest<UserApiRecord[]>('/users');
+export async function getUsersApi(params?: {
+    status?: string;
+    role?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+}): Promise<PaginatedResponse<UserApiRecord>> {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.set('status', params.status);
+    if (params?.role) queryParams.set('role', params.role);
+    if (params?.search) queryParams.set('search', params.search);
+    if (params?.page) queryParams.set('page', String(params.page));
+    if (params?.pageSize) queryParams.set('pageSize', String(params.pageSize));
+
+    const queryString = queryParams.toString();
+    const url = queryString ? `/users?${queryString}` : '/users';
+    return apiRequest<PaginatedResponse<UserApiRecord>>(url);
 }
 
 export async function createUserApi(payload: {
@@ -193,8 +221,21 @@ export async function deletePageApi(id: number | string): Promise<void> {
     });
 }
 
-export async function getContactsApi(): Promise<ContactApiRecord[]> {
-    return apiRequest<ContactApiRecord[]>('/contact');
+export async function getContactsApi(params?: {
+    contactStatus?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+}): Promise<PaginatedResponse<ContactApiRecord>> {
+    const queryParams = new URLSearchParams();
+    if (params?.contactStatus) queryParams.set('contactStatus', params.contactStatus);
+    if (params?.search) queryParams.set('search', params.search);
+    if (params?.page) queryParams.set('page', String(params.page));
+    if (params?.pageSize) queryParams.set('pageSize', String(params.pageSize));
+
+    const queryString = queryParams.toString();
+    const url = queryString ? `/contact?${queryString}` : '/contact';
+    return apiRequest<PaginatedResponse<ContactApiRecord>>(url);
 }
 
 export async function createContactApi(payload: {

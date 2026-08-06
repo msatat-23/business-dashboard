@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!found.isActive) {
           return { success: false, message: 'Account is deactivated. Contact an administrator.' };
         }
-        if (password && found.password !== password && !found.password.startsWith('$2')) {
+        if (password && found.password && found.password !== password && !found.password.startsWith('$2')) {
           return { success: false, message: 'Invalid password.' };
         }
         setCurrentUser(found);

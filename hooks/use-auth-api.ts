@@ -12,7 +12,7 @@ import {
   type UserApiRecord,
 } from '@/lib/api';
 
-const USERS_QUERY_KEY = ['users'];
+const USERS_QUERY_KEY = 'users';
 
 export function useLoginMutation() {
   return useMutation({
@@ -20,10 +20,18 @@ export function useLoginMutation() {
   });
 }
 
-export function useUsersQuery() {
+
+
+export function useUsersQuery(params?: {
+  status?: string;
+  role?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}) {
   return useQuery({
-    queryKey: USERS_QUERY_KEY,
-    queryFn: getUsersApi,
+    queryKey: [USERS_QUERY_KEY, params].filter(Boolean),
+    queryFn: () => getUsersApi(params),
   });
 }
 
@@ -33,7 +41,7 @@ export function useCreateUserMutation() {
   return useMutation({
     mutationFn: createUserApi,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: [USERS_QUERY_KEY] });
     },
   });
 }
@@ -45,7 +53,7 @@ export function useUpdateUserMutation() {
     mutationFn: ({ id, payload }: { id: string; payload: Partial<UserApiRecord> }) =>
       updateUserApi(id, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: [USERS_QUERY_KEY] });
     },
   });
 }
@@ -57,7 +65,7 @@ export function useUpdateUserRoleMutation() {
     mutationFn: ({ id, role }: { id: string; role: UserApiRecord['role'] }) =>
       updateUserRoleApi(id, role),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: [USERS_QUERY_KEY] });
     },
   });
 }
@@ -68,7 +76,7 @@ export function useDeleteUserMutation() {
   return useMutation({
     mutationFn: deleteUserApi,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: [USERS_QUERY_KEY] });
     },
   });
 }

@@ -32,8 +32,6 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
   const { showToast: ctxToast } = useToast();
   const showToast = onShowToast || ctxToast;
   const { users, updateContactStatus, deleteContact } = useAuth();
-  const { data: contactApiData = [], isLoading, isError, error, refetch } = useContactsQuery();
-  const contacts = useMemo(() => contactApiData.map(mapContactApiToDashboard), [contactApiData]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -42,6 +40,35 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+
+  // Build query params for API call
+  const queryParams = useMemo(() => {
+    const params: {
+      search?: string;
+      contactStatus?: string;
+      page: number;
+      pageSize: number;
+    } = {
+      page: currentPage,
+      pageSize: pageSize,
+    };
+
+    if (searchTerm.trim()) {
+      params.search = searchTerm.trim();
+    }
+    if (statusFilter !== 'all') {
+      params.contactStatus = statusFilter;
+    }
+
+    return params;
+  }, [searchTerm, statusFilter, currentPage, pageSize]);
+
+  const { data: apiResponse, isLoading, isError, error, refetch } = useContactsQuery(queryParams);
+
+
+  const contacts = useMemo(() =>
+    (apiResponse?.items ?? []).map(mapContactApiToDashboard), [apiResponse]);
+
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -77,28 +104,16 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
     { value: 'resolved', label: 'Resolved', badge: 'RESOLVED', badgeClass: 'bg-emerald-100 text-emerald-700' },
   ];
 
-  // Filter contacts logic
-  const filteredContacts = useMemo(() => {
-    return contacts.filter((c) => {
-      const matchesSearch =
-        c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.phone && c.phone.includes(searchTerm)) ||
-        (c.jobTitle && c.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Extract total from paginated response
+  const totalItems = useMemo(() => {
+    if (!apiResponse) return 0;
+    if (Array.isArray(apiResponse)) return apiResponse.length;
+    return (apiResponse as any)?.total || 0;
+  }, [apiResponse]);
 
-      const matchesStatus =
-        statusFilter === 'all' || (c.status || 'new') === statusFilter;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
 
-      return matchesSearch && matchesStatus;
-    });
-  }, [contacts, searchTerm, statusFilter]);
-
-  const totalPages = Math.ceil(filteredContacts.length / pageSize) || 1;
-
-  const paginatedContacts = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredContacts.slice(start, start + pageSize);
-  }, [filteredContacts, currentPage, pageSize]);
+  const paginatedContacts = contacts;
 
   const updateStatusMutation = useUpdateContactStatusQuery();
   const deleteContactMutation = useDeleteContactMutation();
@@ -273,7 +288,7 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
             No contact inquiries matching search filters found.
           </div>
         ) : (
-          paginatedContacts.map((contact) => (
+          paginatedContacts.map((contact: Contact) => (
             <div
               key={contact.id}
               className="bg-white border border-slate-200/90 rounded-2xl p-5 flex flex-col justify-between gap-4 shadow-2xs hover:shadow-sm transition-all"
@@ -372,7 +387,7 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
                   </td>
                 </tr>
               ) : (
-                paginatedContacts.map((contact) => (
+                paginatedContacts.map((contact: Contact) => (
                   <tr key={contact.id} className="hover:bg-slate-50/80 transition-colors group">
                     {/* Name & Title */}
                     <td className="py-4 px-6">
@@ -462,7 +477,7 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        totalItems={filteredContacts.length}
+        totalItems={totalItems}
         pageSize={pageSize}
         onPageChange={(page) => setCurrentPage(page)}
         onPageSizeChange={(size) => {

@@ -39,12 +39,6 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
   const { showToast: ctxToast } = useToast();
   const showToast = onShowToast || ctxToast;
   const { currentUser, switchRole } = useAuth();
-  const { data: userApiData = [], isLoading, isError, error, refetch } = useUsersQuery();
-  const users = useMemo(() => userApiData.map(mapUserApiToDashboard), [userApiData]);
-  const createUserMutation = useCreateUserMutation();
-  const updateUserMutation = useUpdateUserMutation();
-  const updateUserRoleMutation = useUpdateUserRoleMutation();
-  const deleteUserMutation = useDeleteUserMutation();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -52,6 +46,49 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+
+  // Build query params for API call
+  const queryParams = useMemo(() => {
+    const params: {
+      search?: string;
+      role?: string;
+      status?: string;
+      page: number;
+      pageSize: number;
+    } = {
+      page: currentPage,
+      pageSize: pageSize,
+    };
+
+    if (searchTerm.trim()) {
+      params.search = searchTerm.trim();
+    }
+    if (roleFilter !== 'all') {
+      params.role = roleFilter;
+    }
+    if (statusFilter !== 'all') {
+      params.status = statusFilter === 'active' ? 'active' : 'inactive';
+    }
+
+    return params;
+  }, [searchTerm, roleFilter, statusFilter, currentPage, pageSize]);
+
+  const { data: apiResponse, isLoading, isError, error, refetch } = useUsersQuery(queryParams);
+  console.log(apiResponse)
+
+  // Extract data array from paginated response
+
+  const users = useMemo(
+    () => (apiResponse?.items ?? []).map(mapUserApiToDashboard),
+    [apiResponse],
+  );
+
+
+  const createUserMutation = useCreateUserMutation();
+  const updateUserMutation = useUpdateUserMutation();
+  const updateUserRoleMutation = useUpdateUserRoleMutation();
+  const deleteUserMutation = useDeleteUserMutation();
+
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,35 +110,22 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
 
   // Reset page when filters change
   useEffect(() => {
-
     const initiatePage = () => {
       setCurrentPage(1);
     };
-
     initiatePage();
-
   }, [searchTerm, roleFilter, statusFilter]);
 
-  // Memoized filter users logic
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
-      const matchesSearch =
-        u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesRole = roleFilter === 'all' || u.role === roleFilter;
-      const matchesStatus =
-        statusFilter === 'all' || (statusFilter === 'active' ? u.isActive : !u.isActive);
+  // Extract total from paginated response
+  const totalItems = useMemo(() => {
+    if (!apiResponse) return 0;
+    if (Array.isArray(apiResponse)) return apiResponse.length;
+    return (apiResponse as any)?.total || 0;
+  }, [apiResponse]);
 
-      return matchesSearch && matchesRole && matchesStatus;
-    });
-  }, [users, searchTerm, roleFilter, statusFilter]);
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
 
-  const totalPages = Math.ceil(filteredUsers.length / pageSize) || 1;
-
-  const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredUsers.slice(start, start + pageSize);
-  }, [filteredUsers, currentPage, pageSize]);
+  const paginatedUsers = users;
 
   if (!isAdmin) {
     return (
@@ -373,7 +397,7 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
                   </td>
                 </tr>
               ) : (
-                paginatedUsers.map((user) => {
+                paginatedUsers.map((user: User) => {
                   return (
                     <tr
                       key={user.id}
@@ -470,7 +494,7 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        totalItems={filteredUsers.length}
+        totalItems={totalItems}
         pageSize={pageSize}
         onPageChange={(page) => setCurrentPage(page)}
         onPageSizeChange={(size) => {
