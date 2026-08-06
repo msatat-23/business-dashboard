@@ -1,0 +1,6 @@
+{
+  "name": "Admin Dashboard",
+  "description": "Enterprise user management, pages management, and contacts administration dashboard",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

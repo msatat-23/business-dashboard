@@ -1,0 +1,147 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { Layers, LogOut, Shield, ChevronDown, Check, PanelLeft } from 'lucide-react';
+import { UserRole } from '@/lib/types';
+
+interface HeaderProps {
+  onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
+  isSidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
+}
+
+export function Header({ onShowToast, isSidebarOpen = true, onToggleSidebar }: HeaderProps) {
+  const { currentUser, logout, switchRole } = useAuth();
+  const { showToast: ctxToast } = useToast();
+  const showToast = onShowToast || ctxToast;
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+
+  const handleRoleSelect = (role: UserRole) => {
+    switchRole(role);
+    setRoleDropdownOpen(false);
+    showToast(`Switched active session persona to ${role.toUpperCase()}`, 'info');
+  };
+
+  const getRoleBadgeClass = (role?: string) => {
+    switch (role) {
+      case 'admin':
+        return 'bg-rose-50 text-[#e11d48] border-rose-200 hover:bg-rose-100';
+      case 'editor':
+        return 'bg-purple-50 text-[#9333ea] border-purple-200 hover:bg-purple-100';
+      default:
+        return 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100';
+    }
+  };
+
+  return (
+    <header className="sticky top-0 z-40 backdrop-blur-md bg-white/90 border-b border-slate-200/90 transition-all duration-300">
+      <div className="max-w-[1700px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex items-center justify-between gap-2">
+        {/* Brand Logo & Sidebar Toggle */}
+        <div className="flex items-center gap-2 sm:gap-3 select-none min-w-0">
+          {onToggleSidebar && (
+            <button
+              type="button"
+              onClick={onToggleSidebar}
+              className={`p-2 rounded-xl border transition-all cursor-pointer shrink-0 flex items-center justify-center ${
+                !isSidebarOpen
+                  ? 'bg-rose-50 text-[#e11d48] border-rose-200 shadow-2xs hover:bg-rose-100 ring-2 ring-rose-500/20'
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+              title={isSidebarOpen ? 'Close Navigation Sidebar' : 'Open Navigation Sidebar'}
+            >
+              <PanelLeft size={18} />
+            </button>
+          )}
+
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#f43f5e] via-[#e11d48] to-[#9333ea] flex items-center justify-center text-white shadow-[0_4px_12px_rgba(244,63,94,0.3)] border border-white/30 shrink-0">
+            <Layers size={18} className="sm:hidden" />
+            <Layers size={20} className="hidden sm:block" />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <div className="font-sans text-sm sm:text-base md:text-lg font-black text-slate-900 tracking-tight leading-tight truncate">
+              BUSINESS <span className="bg-gradient-to-r from-[#e11d48] to-[#9333ea] bg-clip-text text-transparent">DEVELOPER</span>
+            </div>
+            <div className="text-[0.55rem] sm:text-[0.62rem] tracking-[1.2px] text-slate-500 font-bold mt-0.2 uppercase truncate">
+              ADMIN DASHBOARD
+            </div>
+          </div>
+        </div>
+
+        {/* Right Controls */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Quick Role Switcher Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setRoleDropdownOpen((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border text-[0.7rem] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${getRoleBadgeClass(
+                currentUser?.role
+              )}`}
+            >
+              <Shield size={13} className="shrink-0" />
+              <span className="uppercase">{currentUser?.role || 'Guest'}</span>
+              <ChevronDown size={13} className="shrink-0" />
+            </button>
+
+            {roleDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-2xl p-2 shadow-xl z-50 flex flex-col gap-1 text-slate-800">
+                <div className="text-[0.65rem] text-slate-400 uppercase font-extrabold px-3 py-1 tracking-wider border-b border-slate-100">
+                  Switch Active Role
+                </div>
+                <button
+                  onClick={() => handleRoleSelect('admin')}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer"
+                >
+                  <span className="text-[#e11d48]">ADMIN (Full)</span>
+                  {currentUser?.role === 'admin' && <Check size={14} className="text-[#e11d48]" />}
+                </button>
+                <button
+                  onClick={() => handleRoleSelect('editor')}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer"
+                >
+                  <span className="text-[#9333ea]">EDITOR (Pages)</span>
+                  {currentUser?.role === 'editor' && <Check size={14} className="text-[#9333ea]" />}
+                </button>
+                <button
+                  onClick={() => handleRoleSelect('user')}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer"
+                >
+                  <span className="text-blue-600">USER (Read Only)</span>
+                  {currentUser?.role === 'user' && <Check size={14} className="text-blue-600" />}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* User Profile Summary - Hidden on mobile, compact on desktop */}
+          <div className="hidden sm:flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-xl">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#f43f5e] to-[#9333ea] flex items-center justify-center font-bold text-white text-[0.7rem]">
+              {currentUser?.fullName.substring(0, 1) || 'A'}
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="font-bold text-xs text-slate-900 leading-tight">
+                {currentUser?.fullName || 'User'}
+              </span>
+              <span className="text-[0.65rem] text-slate-500 truncate max-w-[130px]">
+                {currentUser?.email}
+              </span>
+            </div>
+          </div>
+
+          {/* Top Header Logout */}
+          <button
+            onClick={() => {
+              logout();
+              showToast('Signed out of admin dashboard.', 'info');
+            }}
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-rose-50 border border-slate-200 text-slate-600 hover:text-[#e11d48] transition-colors cursor-pointer"
+            title="Sign Out"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
