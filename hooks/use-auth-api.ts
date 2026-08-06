@@ -78,7 +78,6 @@ export function mapUserApiToDashboard(user: UserApiRecord) {
     id: user.id,
     fullName: user.fullName,
     email: user.email,
-    password: user.password.startsWith('$2') ? '••••••••••••' : user.password,
     role: user.role,
     isActive: user.isActive,
     createdAt: user.createdAt,

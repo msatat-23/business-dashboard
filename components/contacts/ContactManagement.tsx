@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Contact } from '@/lib/types';
+import { Contact, ContactStatus } from '@/lib/types';
 import { ContactDetailModal } from './ContactDetailModal';
 import { CustomSelect, SelectOption } from '@/components/ui/Select';
 import { Pagination } from '@/components/ui/Pagination';
@@ -66,15 +66,15 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
 
   const contactFilterOptions: SelectOption[] = [
     { value: 'all', label: 'All Inquiry Statuses', badge: 'ALL', badgeClass: 'bg-slate-100 text-slate-600' },
-    { value: 'New', label: 'New Inquiries Only', badge: 'NEW', badgeClass: 'bg-blue-100 text-blue-600' },
-    { value: 'In Progress', label: 'In Progress', badge: 'ACTIVE', badgeClass: 'bg-amber-100 text-amber-700' },
-    { value: 'Resolved', label: 'Resolved Inquiries', badge: 'RESOLVED', badgeClass: 'bg-emerald-100 text-emerald-700' },
+    { value: 'new', label: 'New Inquiries Only', badge: 'NEW', badgeClass: 'bg-blue-100 text-blue-600' },
+    { value: 'inprogress', label: 'In Progress', badge: 'ACTIVE', badgeClass: 'bg-amber-100 text-amber-700' },
+    { value: 'resolved', label: 'Resolved Inquiries', badge: 'RESOLVED', badgeClass: 'bg-emerald-100 text-emerald-700' },
   ];
 
-  const quickStatusOptions: SelectOption<'New' | 'In Progress' | 'Resolved'>[] = [
-    { value: 'New', label: 'New', badge: 'NEW', badgeClass: 'bg-blue-100 text-blue-600' },
-    { value: 'In Progress', label: 'In Progress', badge: 'ACTIVE', badgeClass: 'bg-amber-100 text-amber-700' },
-    { value: 'Resolved', label: 'Resolved', badge: 'RESOLVED', badgeClass: 'bg-emerald-100 text-emerald-700' },
+  const quickStatusOptions: SelectOption<ContactStatus>[] = [
+    { value: 'new', label: 'New', badge: 'NEW', badgeClass: 'bg-blue-100 text-blue-600' },
+    { value: 'inprogress', label: 'In Progress', badge: 'ACTIVE', badgeClass: 'bg-amber-100 text-amber-700' },
+    { value: 'resolved', label: 'Resolved', badge: 'RESOLVED', badgeClass: 'bg-emerald-100 text-emerald-700' },
   ];
 
   // Filter contacts logic
@@ -87,7 +87,7 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
         (c.jobTitle && c.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesStatus =
-        statusFilter === 'all' || (c.status || 'New') === statusFilter;
+        statusFilter === 'all' || (c.status || 'new') === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
@@ -108,7 +108,7 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
     setIsDetailOpen(true);
   };
 
-  const handleStatusChange = (id: string, newStatus: 'New' | 'In Progress' | 'Resolved') => {
+  const handleStatusChange = (id: string, newStatus: ContactStatus) => {
     updateStatusMutation.mutate(
       { id, contactStatus: newStatus },
       {
@@ -160,24 +160,24 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
   };
 
   // Requirement 9: Fix status breaking word text with whitespace-nowrap and non-breaking badges
-  const getStatusBadge = (status?: 'New' | 'In Progress' | 'Resolved') => {
-    const currentStatus = status || 'New';
+  const getStatusBadge = (status?: ContactStatus) => {
+    const currentStatus = status || 'new';
     switch (currentStatus) {
-      case 'New':
+      case 'new':
         return (
           <span className="whitespace-nowrap inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-600 px-3 py-1 rounded-full text-[0.72rem] font-bold uppercase tracking-wider">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
             <span>New Inquiry</span>
           </span>
         );
-      case 'In Progress':
+      case 'inprogress':
         return (
           <span className="whitespace-nowrap inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-600 px-3 py-1 rounded-full text-[0.72rem] font-bold uppercase tracking-wider">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
             <span>In Progress</span>
           </span>
         );
-      case 'Resolved':
+      case 'resolved':
         return (
           <span className="whitespace-nowrap inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-600 px-3 py-1 rounded-full text-[0.72rem] font-bold uppercase tracking-wider">
             <CheckCircle2 size={12} className="shrink-0" />
@@ -320,8 +320,8 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
 
                 <div className="flex items-center gap-2">
                   {/* Custom Status Quick Select */}
-                  <CustomSelect<'New' | 'In Progress' | 'Resolved'>
-                    value={contact.status || 'New'}
+                  <CustomSelect<ContactStatus>
+                    value={contact.status || 'new'}
                     onChange={(val) => handleStatusChange(contact.id, val)}
                     options={quickStatusOptions}
                     size="sm"
@@ -412,8 +412,8 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
                       <div className="flex items-center gap-2">
                         {getStatusBadge(contact.status)}
                         {/* Custom status dropdown */}
-                        <CustomSelect<'New' | 'In Progress' | 'Resolved'>
-                          value={contact.status || 'New'}
+                        <CustomSelect<ContactStatus>
+                          value={contact.status || 'new'}
                           onChange={(val) => handleStatusChange(contact.id, val)}
                           options={quickStatusOptions}
                           size="sm"

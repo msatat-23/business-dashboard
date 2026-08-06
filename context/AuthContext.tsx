@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { User, Page, Contact, UserRole } from '@/lib/types';
+import { User, Page, Contact, ContactStatus, UserRole } from '@/lib/types';
 import { INITIAL_USERS, INITIAL_PAGES, INITIAL_CONTACTS } from '@/lib/mock-data';
 import {
   getStoredUsers,
@@ -28,7 +28,7 @@ interface AuthContextType {
   updatePage: (id: number, content: Record<string, any>, newSlug?: string) => { success: boolean; message: string };
   deletePage: (id: number) => { success: boolean; message: string };
   createContact: (newContact: Omit<Contact, 'id' | 'createdAt' | 'status'>) => { success: boolean; message: string };
-  updateContactStatus: (id: string, status: 'New' | 'In Progress' | 'Resolved') => { success: boolean; message: string };
+  updateContactStatus: (id: string, status: ContactStatus) => { success: boolean; message: string };
   deleteContact: (id: string) => { success: boolean; message: string };
 }
 
@@ -297,7 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ...contactData,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
-      status: 'New',
+      status: 'new',
     };
 
     const nextContacts = [newContact, ...contacts];
@@ -306,7 +306,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true, message: 'Contact entry logged successfully!' };
   };
 
-  const updateContactStatus = (id: string, status: 'New' | 'In Progress' | 'Resolved') => {
+  const updateContactStatus = (id: string, status: ContactStatus) => {
     const nextContacts = contacts.map((c) => (c.id === id ? { ...c, status } : c));
     setContacts(nextContacts);
     saveContacts(nextContacts);

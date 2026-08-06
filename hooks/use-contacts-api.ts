@@ -8,6 +8,7 @@ import {
     deleteContactApi,
     type ContactApiRecord,
 } from '@/lib/api';
+import type { ContactStatus } from '@/lib/types';
 
 const CONTACTS_QUERY_KEY = ['contacts'];
 
@@ -33,7 +34,7 @@ export function useUpdateContactStatusQuery() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ id, contactStatus }: { id: string; contactStatus: string }) =>
+        mutationFn: ({ id, contactStatus }: { id: string; contactStatus: ContactStatus }) =>
             updateContactStatusApi(id, contactStatus),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: CONTACTS_QUERY_KEY });
@@ -61,6 +62,6 @@ export function mapContactApiToDashboard(contact: ContactApiRecord) {
         email: contact.email,
         submittedByUserId: contact.submittedByUserId,
         createdAt: contact.createdAt,
-        status: contact.status || 'New',
+        status: contact.contactStatus || 'new',
     };
 }

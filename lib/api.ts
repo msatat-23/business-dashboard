@@ -1,3 +1,5 @@
+import type { ContactStatus } from './types';
+
 const DEFAULT_API_BASE_URL = 'http://localhost:3001/api/v1';
 
 export const API_BASE_URL =
@@ -29,7 +31,6 @@ export interface UserApiRecord {
     id: string;
     fullName: string;
     email: string;
-    password: string;
     role: 'admin' | 'editor' | 'user';
     isActive: boolean;
     createdAt: string;
@@ -44,7 +45,7 @@ export interface ContactApiRecord {
     email: string;
     submittedByUserId: string | null;
     createdAt: string;
-    status?: 'New' | 'In Progress' | 'Resolved';
+    contactStatus?: ContactStatus;
 }
 
 export interface PageApiRecord {
@@ -57,6 +58,12 @@ export interface PageApiRecord {
 }
 
 export interface PagesApi extends Array<PageApiRecord> { };
+
+export interface AdminStatsApiRecord {
+    users: number;
+    pages: number;
+    contacts: number;
+}
 
 async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers = new Headers(options.headers || {});
@@ -204,7 +211,7 @@ export async function createContactApi(payload: {
 }
 
 export async function updateContactStatusApi(id: string,
-    contactStatus: string): Promise<ContactApiRecord> {
+    contactStatus: ContactStatus): Promise<ContactApiRecord> {
     return apiRequest<ContactApiRecord>(`/contact/${id}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ contactStatus })
@@ -215,4 +222,8 @@ export async function deleteContactApi(id: string): Promise<void> {
     return apiRequest<void>(`/contact/${id}`, {
         method: 'DELETE',
     });
+}
+
+export async function getAdminStatsApi(): Promise<AdminStatsApiRecord> {
+    return apiRequest<AdminStatsApiRecord>('/admin/stats');
 }

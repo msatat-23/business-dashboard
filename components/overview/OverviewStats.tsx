@@ -4,9 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { useUsersQuery, mapUserApiToDashboard } from '@/hooks/use-auth-api';
-import { usePagesQuery, mapPageApiToDashboard } from '@/hooks/use-pages-api';
-import { useContactsQuery, mapContactApiToDashboard } from '@/hooks/use-contacts-api';
+import { useAdminStatsQuery, mapAdminStatsApiToDashboard } from '@/hooks/use-admin-api';
 import {
   Users,
   FileText,
@@ -35,21 +33,14 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
     }
   };
 
-  const { currentUser, users: authUsers, pages: authPages, contacts: authContacts, switchRole } = useAuth();
+  const { currentUser, switchRole } = useAuth();
 
-  const { data: userApiData } = useUsersQuery();
-  const { data: pageApiData } = usePagesQuery();
-  const { data: contactApiData } = useContactsQuery();
+  const { data: statsApiData } = useAdminStatsQuery();
+  const stats = statsApiData ? mapAdminStatsApiToDashboard(statsApiData) : undefined;
 
-  const users = userApiData ? userApiData.map(mapUserApiToDashboard) : authUsers;
-  const pages = pageApiData ? pageApiData.map(mapPageApiToDashboard) : authPages;
-  const contacts = contactApiData ? contactApiData.map(mapContactApiToDashboard) : authContacts;
-
-  const adminCount = users.filter((u) => u.role === 'admin').length;
-  const editorCount = users.filter((u) => u.role === 'editor').length;
-  const userCount = users.filter((u) => u.role === 'user').length;
-
-  const totalFields = pages.reduce((acc, p) => acc + Object.keys(p.content || {}).length, 0);
+  const usersCount = stats?.users ?? 0;
+  const pagesCount = stats?.pages ?? 0;
+  const contactsCount = stats?.contacts ?? 0;
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -86,11 +77,10 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
                   switchRole('admin');
                   showToast('Session switched to Admin persona', 'success');
                 }}
-                className={`py-1.5 px-2 rounded-lg text-[0.7rem] font-extrabold uppercase transition-all cursor-pointer ${
-                  currentUser?.role === 'admin'
-                    ? 'bg-[#f43f5e] text-white shadow-sm'
-                    : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
-                }`}
+                className={`py-1.5 px-2 rounded-lg text-[0.7rem] font-extrabold uppercase transition-all cursor-pointer ${currentUser?.role === 'admin'
+                  ? 'bg-[#f43f5e] text-white shadow-sm'
+                  : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                  }`}
               >
                 Admin
               </button>
@@ -100,11 +90,10 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
                   switchRole('editor');
                   showToast('Session switched to Editor persona', 'info');
                 }}
-                className={`py-1.5 px-2 rounded-lg text-[0.7rem] font-extrabold uppercase transition-all cursor-pointer ${
-                  currentUser?.role === 'editor'
-                    ? 'bg-purple-600 text-white shadow-sm'
-                    : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
-                }`}
+                className={`py-1.5 px-2 rounded-lg text-[0.7rem] font-extrabold uppercase transition-all cursor-pointer ${currentUser?.role === 'editor'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                  }`}
               >
                 Editor
               </button>
@@ -114,11 +103,10 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
                   switchRole('user');
                   showToast('Session switched to User persona', 'info');
                 }}
-                className={`py-1.5 px-2 rounded-lg text-[0.7rem] font-extrabold uppercase transition-all cursor-pointer ${
-                  currentUser?.role === 'user'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
-                }`}
+                className={`py-1.5 px-2 rounded-lg text-[0.7rem] font-extrabold uppercase transition-all cursor-pointer ${currentUser?.role === 'user'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                  }`}
               >
                 User
               </button>
@@ -145,14 +133,12 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
             </div>
 
             <div>
-              <div className="text-3xl font-black text-slate-900 tracking-tight mb-1">{users.length}</div>
+              <div className="text-3xl font-black text-slate-900 tracking-tight mb-1">{usersCount}</div>
               <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                 System Accounts
               </div>
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 text-[0.72rem] text-slate-500">
-                <span className="text-[#e11d48] font-bold">{adminCount} Admins</span> •{' '}
-                <span className="text-[#9333ea] font-bold">{editorCount} Editors</span> •{' '}
-                <span className="text-blue-600 font-bold">{userCount} Users</span>
+                <span className="text-slate-500">Total registered accounts</span>
               </div>
             </div>
           </div>
@@ -166,7 +152,7 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
             </div>
 
             <div>
-              <div className="text-3xl font-black text-slate-700 tracking-tight mb-1">{users.length}</div>
+              <div className="text-3xl font-black text-slate-700 tracking-tight mb-1">{usersCount}</div>
               <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 System Accounts Directory
               </div>
@@ -192,13 +178,12 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
           </div>
 
           <div>
-            <div className="text-3xl font-black text-slate-900 tracking-tight mb-1">{pages.length}</div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight mb-1">{pagesCount}</div>
             <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
               CMS Dynamic Pages
             </div>
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 text-[0.72rem] text-slate-500">
-              <span className="text-[#9333ea] font-bold">{totalFields} Content Keys</span> • JSON
-              Schema
+              <span className="text-[#9333ea] font-bold">JSON Schema</span> based content
             </div>
           </div>
         </div>
@@ -219,7 +204,7 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
 
           <div>
             <div className="text-3xl font-black text-slate-900 tracking-tight mb-1">
-              {contacts.length}
+              {contactsCount}
             </div>
             <div className="text-xs font-bold text-slate-600 uppercase tracking-wider">
               Client Inquiries

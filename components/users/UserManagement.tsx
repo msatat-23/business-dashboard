@@ -21,8 +21,6 @@ import {
   Search,
   Filter,
   Shield,
-  Eye,
-  EyeOff,
   Edit2,
   Trash2,
   Lock,
@@ -58,7 +56,6 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
 
   const isAdmin = currentUser?.role === 'admin';
 
@@ -138,13 +135,6 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
     );
   }
 
-  const togglePasswordReveal = (id: string) => {
-    setRevealedPasswords((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
-
   const handleOpenCreateModal = () => {
     setSelectedUser(null);
     setIsModalOpen(true);
@@ -172,15 +162,25 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
     isActive: boolean;
   }) => {
     if (selectedUser) {
+      const updatePayload: {
+        fullName: string;
+        email: string;
+        isActive: boolean;
+        password?: string;
+      } = {
+        fullName: userData.fullName,
+        email: userData.email,
+        isActive: userData.isActive,
+      };
+
+      if (userData.password.trim()) {
+        updatePayload.password = userData.password.trim();
+      }
+
       updateUserMutation.mutate(
         {
           id: selectedUser.id,
-          payload: {
-            fullName: userData.fullName,
-            email: userData.email,
-            password: userData.password,
-            isActive: userData.isActive,
-          },
+          payload: updatePayload,
         },
         {
           onSuccess: () => {
@@ -374,7 +374,6 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
                 </tr>
               ) : (
                 paginatedUsers.map((user) => {
-                  const isPassRevealed = Boolean(revealedPasswords[user.id]);
                   return (
                     <tr
                       key={user.id}
@@ -398,24 +397,14 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
                       {/* Role Badge */}
                       <td className="py-4 px-4">{getRoleBadge(user.role)}</td>
 
-                      {/* Password Eye Toggle */}
+                      {/* Password Security Indicator */}
                       <td className="py-4 px-4">
-                        <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-                          <span className="font-mono text-xs text-slate-700">
-                            {isPassRevealed ? user.password : '••••••••••••'}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => togglePasswordReveal(user.id)}
-                            className="text-slate-400 hover:text-slate-800 p-0.5 rounded cursor-pointer transition-colors"
-                            title={isPassRevealed ? 'Mask password' : 'View password text'}
-                          >
-                            {isPassRevealed ? (
-                              <EyeOff size={14} className="text-[#e11d48]" />
-                            ) : (
-                              <Eye size={14} />
-                            )}
-                          </button>
+                        <div
+                          className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg"
+                          title="Passwords are hashed and cannot be viewed. Use Edit to set a new one."
+                        >
+                          <Lock size={13} className="text-slate-400" />
+                          <span className="font-mono text-xs text-slate-500">Hashed</span>
                         </div>
                       </td>
 

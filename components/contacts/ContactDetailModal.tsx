@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Modal } from '@/components/ui/Modal';
-import { Contact, User } from '@/lib/types';
+import { Contact, ContactStatus, User } from '@/lib/types';
 import { CustomSelect, SelectOption } from '@/components/ui/Select';
 import { Mail, Phone, Briefcase, UserCheck, Calendar, ExternalLink, Trash2 } from 'lucide-react';
 
@@ -11,7 +11,7 @@ interface ContactDetailModalProps {
   onClose: () => void;
   contact: Contact | null;
   submittedUser: User | null;
-  onUpdateStatus: (id: string, status: 'New' | 'In Progress' | 'Resolved') => void;
+  onUpdateStatus: (id: string, status: ContactStatus) => void;
   onDelete: (id: string) => void;
 }
 
@@ -25,10 +25,10 @@ export function ContactDetailModal({
 }: ContactDetailModalProps) {
   if (!contact) return null;
 
-  const modalStatusOptions: SelectOption<'New' | 'In Progress' | 'Resolved'>[] = [
-    { value: 'New', label: 'New Inquiry', badge: 'NEW', badgeClass: 'bg-blue-100 text-blue-600', description: 'Fresh incoming contact request' },
-    { value: 'In Progress', label: 'In Progress', badge: 'ACTIVE', badgeClass: 'bg-amber-100 text-amber-700', description: 'Under active follow up' },
-    { value: 'Resolved', label: 'Resolved', badge: 'RESOLVED', badgeClass: 'bg-emerald-100 text-emerald-700', description: 'Inquiry completed' },
+  const modalStatusOptions: SelectOption<ContactStatus>[] = [
+    { value: 'new', label: 'New Inquiry', badge: 'NEW', badgeClass: 'bg-blue-100 text-blue-600', description: 'Fresh incoming contact request' },
+    { value: 'inprogress', label: 'In Progress', badge: 'ACTIVE', badgeClass: 'bg-amber-100 text-amber-700', description: 'Under active follow up' },
+    { value: 'resolved', label: 'Resolved', badge: 'RESOLVED', badgeClass: 'bg-emerald-100 text-emerald-700', description: 'Inquiry completed' },
   ];
 
   return (
@@ -58,8 +58,8 @@ export function ContactDetailModal({
           {/* Status selector */}
           <div className="flex items-center gap-2">
             <span className="text-[0.68rem] text-slate-500 font-bold uppercase tracking-wider">Status:</span>
-            <CustomSelect<'New' | 'In Progress' | 'Resolved'>
-              value={contact.status || 'New'}
+            <CustomSelect<ContactStatus>
+              value={contact.status || 'new'}
               onChange={(val) => onUpdateStatus(contact.id, val)}
               options={modalStatusOptions}
               size="sm"

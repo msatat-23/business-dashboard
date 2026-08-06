@@ -4,7 +4,7 @@ export interface User {
   id: string; // UUID
   fullName: string;
   email: string;
-  password: string;
+  password?: string; // never returned by the API; only used for local create/edit form state
   role: UserRole;
   isActive: boolean;
   createdAt: string;
@@ -20,6 +20,8 @@ export interface Page {
   updatedAt: string;
 }
 
+export type ContactStatus = 'new' | 'inprogress' | 'resolved';
+
 export interface Contact {
   id: string; // UUID
   fullName: string;
@@ -28,7 +30,7 @@ export interface Contact {
   email: string;
   submittedByUserId: string | null;
   createdAt: string;
-  status?: 'New' | 'In Progress' | 'Resolved';
+  status?: ContactStatus;
 }
 
 export interface AuthState {

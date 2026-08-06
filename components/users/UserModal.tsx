@@ -25,7 +25,7 @@ export function UserModal({ isOpen, onClose, onSubmit, initialUser }: UserModalP
   // Initialize form state directly from initialUser prop
   const [fullName, setFullName] = useState(initialUser?.fullName || '');
   const [email, setEmail] = useState(initialUser?.email || '');
-  const [password, setPassword] = useState(initialUser?.password || '');
+  const [password, setPassword] = useState(''); // never pre-filled: API never returns real/hashed passwords
   const [role, setRole] = useState<UserRole>(initialUser?.role || 'user');
   const [isActive, setIsActive] = useState(initialUser?.isActive ?? true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -40,7 +40,7 @@ export function UserModal({ isOpen, onClose, onSubmit, initialUser }: UserModalP
       setErrorMsg('Valid email address is required.');
       return;
     }
-    if (!password.trim()) {
+    if (!isEditing && !password.trim()) {
       setErrorMsg('Password is required.');
       return;
     }
@@ -114,9 +114,13 @@ export function UserModal({ isOpen, onClose, onSubmit, initialUser }: UserModalP
           label="Account Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter secure password"
-          helperText="Click the eye icon on the right to toggle password visibility."
-          required
+          placeholder={isEditing ? 'Leave blank to keep current password' : 'Enter secure password'}
+          helperText={
+            isEditing
+              ? 'Passwords are hashed and cannot be displayed. Leave blank to keep the current password, or enter a new one to reset it.'
+              : 'Click the eye icon on the right to toggle password visibility.'
+          }
+          required={!isEditing}
         />
 
         {/* Role Selection */}
@@ -129,11 +133,10 @@ export function UserModal({ isOpen, onClose, onSubmit, initialUser }: UserModalP
             <button
               type="button"
               onClick={() => setRole('admin')}
-              className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                role === 'admin'
+              className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${role === 'admin'
                   ? 'bg-rose-50 border-[#f43f5e] text-[#e11d48] shadow-xs'
                   : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
+                }`}
             >
               <span className="font-extrabold uppercase tracking-wider">Admin</span>
               <span className="text-[0.68rem] font-normal text-slate-500 text-center">Full Control</span>
@@ -142,11 +145,10 @@ export function UserModal({ isOpen, onClose, onSubmit, initialUser }: UserModalP
             <button
               type="button"
               onClick={() => setRole('editor')}
-              className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                role === 'editor'
+              className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${role === 'editor'
                   ? 'bg-purple-50 border-purple-500 text-[#9333ea] shadow-xs'
                   : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
+                }`}
             >
               <span className="font-extrabold uppercase tracking-wider">Editor</span>
               <span className="text-[0.68rem] font-normal text-slate-500 text-center">Manage Pages</span>
@@ -155,11 +157,10 @@ export function UserModal({ isOpen, onClose, onSubmit, initialUser }: UserModalP
             <button
               type="button"
               onClick={() => setRole('user')}
-              className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                role === 'user'
+              className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${role === 'user'
                   ? 'bg-blue-50 border-blue-500 text-blue-600 shadow-xs'
                   : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              }`}
+                }`}
             >
               <span className="font-extrabold uppercase tracking-wider">User</span>
               <span className="text-[0.68rem] font-normal text-slate-500 text-center">Read Only</span>

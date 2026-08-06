@@ -184,7 +184,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     email: 'j.vance@apexlogistics.com',
     submittedByUserId: '3c762d34-c654-4a79-c3d4-333333333333',
     createdAt: '2026-08-04T09:15:00Z',
-    status: 'New',
+    status: 'new',
   },
   {
     id: 'c2222222-2222-4222-a222-222222222222',
@@ -194,7 +194,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     email: 'v.sterling@meridiancapital.co.uk',
     submittedByUserId: '2b873e23-d765-4b80-b2c3-222222222222',
     createdAt: '2026-08-03T16:30:00Z',
-    status: 'In Progress',
+    status: 'inprogress',
   },
   {
     id: 'c3333333-3333-4333-a333-333333333333',
@@ -204,7 +204,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     email: 'r.nakamura@kyototech.jp',
     submittedByUserId: null,
     createdAt: '2026-08-02T11:00:00Z',
-    status: 'Resolved',
+    status: 'resolved',
   },
   {
     id: 'c4444444-4444-4444-a444-444444444444',
@@ -214,6 +214,6 @@ export const INITIAL_CONTACTS: Contact[] = [
     email: 'crodriguez@solarisventures.com',
     submittedByUserId: '5e540b56-a432-4857-e5f6-555555555555',
     createdAt: '2026-07-29T14:45:00Z',
-    status: 'In Progress',
+    status: 'inprogress',
   },
 ];
