@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -22,7 +21,6 @@ import {
   Shield,
   Layers,
   Globe,
-  ExternalLink,
 } from 'lucide-react';
 
 interface PagesManagementProps {
@@ -30,7 +28,7 @@ interface PagesManagementProps {
 }
 
 export function PagesManagement({ onShowToast }: PagesManagementProps) {
-  const router = useRouter();
+
   const { showToast: ctxToast } = useToast();
   const showToast = onShowToast || ctxToast;
   const { currentUser } = useAuth();

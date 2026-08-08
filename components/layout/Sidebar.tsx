@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'motion/react';
+
 import {
   LayoutDashboard,
   Users,
@@ -13,10 +13,16 @@ import {
   ShieldCheck,
   X,
   Sparkles,
+  Layers
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-export type NavTab = 'overview' | 'users' | 'pages' | 'contacts';
+export type NavTab =
+  | 'overview'
+  | 'users'
+  | 'pages'
+  | 'contents'
+  | 'contacts';
 
 interface SidebarProps {
   activeTab?: NavTab;
@@ -51,6 +57,13 @@ export function Sidebar({ activeTab, onSelectTab, onShowToast, onClose, isOpen =
       href: '/pages',
       label: 'Pages Management',
       icon: FileText,
+      adminOnly: false,
+    },
+    {
+      id: 'contents' as NavTab,
+      href: '/contents',
+      label: 'Content Management',
+      icon: Layers,
       adminOnly: false,
     },
     {

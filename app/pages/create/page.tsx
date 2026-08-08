@@ -6,12 +6,6 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useCreatePageMutation } from '@/hooks/use-pages-api';
-import {
-  KeyTreeEditor,
-  KeyNode,
-  treeToRecord,
-  generateId,
-} from '@/components/pages/KeyTreeEditor';
 import { CloudinaryImageModal } from '@/components/pages/CloudinaryImageModal';
 import {
   ArrowLeft,
@@ -24,6 +18,13 @@ import {
   Globe,
 } from 'lucide-react';
 
+import {
+  KeyTreeEditor,
+  KeyNode,
+  treeToRecord,
+  generateId,
+} from '@/components/pages/key-tree';
+
 export default function CreatePage() {
   const router = useRouter();
   const { showToast } = useToast();
@@ -34,8 +35,8 @@ export default function CreatePage() {
     {
       id: generateId(),
       key: 'title',
-      type: 'text',
-      valueText: '<h1>Welcome Page</h1>',
+      type: 'plainText',
+      valueText: 'Welcome Page',
     },
   ]);
 

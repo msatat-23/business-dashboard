@@ -6,13 +6,6 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { usePagesQuery, useUpdatePageMutation, mapPageApiToDashboard } from '@/hooks/use-pages-api';
-import {
-  KeyTreeEditor,
-  KeyNode,
-  treeToRecord,
-  recordToTree,
-  generateId,
-} from '@/components/pages/KeyTreeEditor';
 import { CloudinaryImageModal } from '@/components/pages/CloudinaryImageModal';
 import {
   ArrowLeft,
@@ -25,6 +18,14 @@ import {
   AlertCircle,
   Pencil,
 } from 'lucide-react';
+
+import {
+  KeyTreeEditor,
+  KeyNode,
+  treeToRecord,
+  recordToTree,
+  generateId,
+} from '@/components/pages/key-tree';
 
 export default function EditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);

@@ -1,4 +1,4 @@
-import type { ContactStatus } from './types';
+import type { ContactStatus, ContentData } from './types';
 
 const DEFAULT_API_BASE_URL = 'http://localhost:3001/api/v1';
 
@@ -267,4 +267,57 @@ export async function deleteContactApi(id: string): Promise<void> {
 
 export async function getAdminStatsApi(): Promise<AdminStatsApiRecord> {
     return apiRequest<AdminStatsApiRecord>('/admin/stats');
+}
+
+export interface ContentApiRecord {
+    id: number;
+    slug: string;
+    content: ContentData;
+    updatedByEmail: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ContentsApi extends Array<ContentApiRecord> { }
+
+export async function getContents(): Promise<ContentsApi> {
+    return apiRequest<ContentsApi>('/contents');
+}
+
+export async function getPublicContentBySlug(
+    slug: string,
+): Promise<ContentApiRecord> {
+    return apiRequest<ContentApiRecord>(`/contents/${slug}`);
+}
+
+export async function updateContentBySlug(
+    slug: string,
+    payload: {
+        content: ContentData;
+    },
+): Promise<ContentApiRecord> {
+    return apiRequest<ContentApiRecord>(`/contents/${slug}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function createContentApi(payload: {
+    slug: string;
+    content: ContentData;
+}): Promise<ContentApiRecord> {
+    return apiRequest<ContentApiRecord>(`/contents/${payload.slug}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+            content: payload.content,
+        }),
+    });
+}
+
+export async function deleteContentApi(
+    id: number | string,
+): Promise<void> {
+    return apiRequest<void>(`/contents/${id}`, {
+        method: 'DELETE',
+    });
 }
