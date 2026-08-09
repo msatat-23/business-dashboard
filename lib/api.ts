@@ -1,4 +1,10 @@
 import type { ContactStatus, ContentData } from './types';
+import { 
+  getAccessToken, 
+  setAuthTokens, 
+  clearAuthTokens, 
+  getRefreshToken 
+} from './auth-storage';
 
 const DEFAULT_API_BASE_URL = 'http://localhost:3001/api/v1';
 
@@ -18,13 +24,27 @@ export type ApiError = {
 };
 
 export interface AuthLoginResponse {
+    
     accessToken: string;
+    refreshToken?: string;
     user: {
         id: string;
         fullName: string;
         email: string;
         role: 'admin' | 'editor' | 'user';
     };
+}
+
+export interface MeResponse {
+
+data:{
+
+        id: string;
+        fullName: string;
+        email: string;
+        role: 'admin' | 'editor' | 'user';
+
+}
 }
 
 export interface PaginatedResponse<T> {
@@ -77,12 +97,61 @@ export interface AdminStatsApiRecord {
 
 
 
+// Flag to prevent multiple simultaneous refresh attempts
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+function subscribeTokenRefresh(callback: (token: string) => void) {
+    refreshSubscribers.push(callback);
+}
+
+function onTokenRefreshed(token: string) {
+    refreshSubscribers.forEach((callback) => callback(token));
+    refreshSubscribers = [];
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+    try {
+        const refreshToken = getRefreshToken();
+        if (!refreshToken) {
+            throw new Error('No refresh token available');
+        }
+
+        const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ refreshToken }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to refresh token');
+        }
+
+        const envelope = (await response.json()) as ApiEnvelope<{ accessToken: string; refreshToken?: string }>;
+        const { accessToken, refreshToken: newRefreshToken } = envelope.data;
+
+        setAuthTokens({
+            accessToken,
+            refreshToken: newRefreshToken,
+            email: localStorage.getItem('business_dev_session_email') || '',
+        });
+
+        return accessToken;
+    } catch (error) {
+        // Clear all auth data if refresh fails
+        clearAuthTokens();
+        return null;
+    }
+}
+
 async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers = new Headers(options.headers || {});
     headers.set('Content-Type', 'application/json');
 
     if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('business_dev_access_token');
+        const token = getAccessToken();
         if (token) {
             headers.set('Authorization', `Bearer ${token}`);
         }
@@ -93,13 +162,74 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
         headers,
     });
 
-
     if (!response.ok) {
         let payload: ApiError | undefined;
         try {
             payload = (await response.json()) as ApiError;
         } catch {
             payload = undefined;
+        }
+
+        // Handle 401 Unauthorized - try to refresh token
+        if (response.status === 401 && typeof window !== 'undefined' && path !== '/auth/refresh') {
+            // Try to refresh the token
+            if (!isRefreshing) {
+                isRefreshing = true;
+                
+                const newToken = await refreshAccessToken();
+                isRefreshing = false;
+
+                if (newToken) {
+                    onTokenRefreshed(newToken);
+                    
+                    // Retry the original request with new token
+                    headers.set('Authorization', `Bearer ${newToken}`);
+                    const retryResponse = await fetch(`${API_BASE_URL}${path}`, {
+                        ...options,
+                        headers,
+                    });
+
+                    if (retryResponse.ok) {
+                        if (retryResponse.status === 204) {
+                            return undefined as T;
+                        }
+                        const envelope = (await retryResponse.json()) as ApiEnvelope<T>;
+                        return envelope.data;
+                    }
+                }
+            } else {
+                // Wait for the token to be refreshed
+                return new Promise((resolve, reject) => {
+                    subscribeTokenRefresh(async (token: string) => {
+                        try {
+                            headers.set('Authorization', `Bearer ${token}`);
+                            const retryResponse = await fetch(`${API_BASE_URL}${path}`, {
+                                ...options,
+                                headers,
+                            });
+
+                            if (retryResponse.ok) {
+                                if (retryResponse.status === 204) {
+                                    resolve(undefined as T);
+                                    return;
+                                }
+                                const envelope = (await retryResponse.json()) as ApiEnvelope<T>;
+                                resolve(envelope.data);
+                            } else {
+                                reject(new Error('Request failed after token refresh'));
+                            }
+                        } catch (error) {
+                            reject(error);
+                        }
+                    });
+                });
+            }
+
+            // If we get here, refresh failed - redirect to login
+            const currentPath = window.location.pathname;
+            if (currentPath !== '/login') {
+                window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+            }
         }
 
         const message = payload?.message || payload?.error || 'Request failed.';
@@ -122,6 +252,10 @@ export async function loginWithApi(payload: {
         method: 'POST',
         body: JSON.stringify(payload),
     });
+}
+
+export async function getCurrentUserApi(): Promise<MeResponse> {
+    return apiRequest<MeResponse>('/auth/me');
 }
 
 export async function getUsersApi(params?: {

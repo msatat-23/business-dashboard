@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { useAuth } from '@/context/AuthContext';
 import { PasswordInput } from '@/components/ui/PasswordInput';
-import { Layers, ArrowRight, ShieldCheck, AlertCircle, Sparkles } from 'lucide-react';
+import { Layers, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface LoginFormValues {
   email: string;
@@ -17,6 +18,10 @@ interface LoginFormProps {
 
 export function LoginForm({ onShowToast }: LoginFormProps) {
   const { login } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/dashboard';
+  
   const { register, handleSubmit, formState } = useForm<LoginFormValues>({
     defaultValues: {
       email: 'admin@business-dev.com',
@@ -36,6 +41,8 @@ export function LoginForm({ onShowToast }: LoginFormProps) {
         onShowToast(res.message, 'error');
       } else {
         onShowToast(res.message, 'success');
+        // Redirect to the original page or dashboard
+        router.push(redirect);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed.';

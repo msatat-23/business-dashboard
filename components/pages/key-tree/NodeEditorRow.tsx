@@ -25,7 +25,7 @@ const VALUE_LABELS: Record<'plainText' | 'richText', string> = {
 };
 
 export function NodeEditorRow({ node, index, total, onUpdate, onDelete, onMove, mode }: NodeEditorRowProps) {
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     return (
         <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs transition-all hover:border-slate-300">

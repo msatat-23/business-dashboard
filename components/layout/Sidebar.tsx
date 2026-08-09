@@ -156,7 +156,7 @@ export function Sidebar({ activeTab, onSelectTab, onShowToast, onClose, isOpen =
 
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#f43f5e] to-[#9333ea] text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">
-              {currentUser?.fullName.substring(0, 1) || 'U'}
+             {(currentUser?.fullName &&typeof currentUser.fullName ==="string")?currentUser.fullName.slice(0,2): 'A'}
             </div>
             <div className="flex flex-col min-w-0 truncate">
               <span className="text-xs font-black text-slate-900 truncate leading-tight">

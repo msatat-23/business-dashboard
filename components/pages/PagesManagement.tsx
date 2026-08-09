@@ -55,9 +55,9 @@ export function PagesManagement({ onShowToast }: PagesManagementProps) {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full font-sans">
+    <div className="flex flex-col gap-10 w-full font-sans">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-200">
+    <div className="sticky top-24 z-40 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 pt-2 pl-2 pr-2 rounded-xl border-b border-slate-200 bg-white">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="p-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-[#e11d48]">

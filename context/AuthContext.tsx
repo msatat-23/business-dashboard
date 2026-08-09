@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { User, Page, Contact, ContactStatus, UserRole } from '@/lib/types';
+import { User, Page, Contact, ContactStatus } from '@/lib/types';
 import { INITIAL_USERS, INITIAL_PAGES, INITIAL_CONTACTS } from '@/lib/mock-data';
 import {
   getStoredUsers,
@@ -11,72 +11,117 @@ import {
   getStoredContacts,
   saveContacts,
 } from '@/lib/storage';
-import { loginWithApi } from '@/lib/api';
+import { loginWithApi, getCurrentUserApi } from '@/lib/api';
+import { 
+  getAuthTokens, 
+  setAuthTokens, 
+  clearAuthTokens, 
+  hasAuthTokens 
+} from '@/lib/auth-storage';
 
 interface AuthContextType {
   currentUser: User | null;
   users: User[];
   pages: Page[];
   contacts: Contact[];
+  isAuthLoading: boolean;
   login: (email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
-  createUser: (newUser: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => { success: boolean; message: string };
   updateUser: (id: string, updatedFields: Partial<User>) => { success: boolean; message: string };
-  deleteUser: (id: string) => { success: boolean; message: string };
-  createPage: (slug: string, initialContent?: Record<string, any>) => { success: boolean; message: string; page?: Page };
   updatePage: (id: number, content: Record<string, any>, newSlug?: string) => { success: boolean; message: string };
-  deletePage: (id: number) => { success: boolean; message: string };
-  createContact: (newContact: Omit<Contact, 'id' | 'createdAt' | 'status'>) => { success: boolean; message: string };
   updateContactStatus: (id: string, status: ContactStatus) => { success: boolean; message: string };
-  deleteContact: (id: string) => { success: boolean; message: string };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
-  const [pages, setPages] = useState<Page[]>(INITIAL_PAGES);
-  const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
-  const [currentUser, setCurrentUser] = useState<User | null>(INITIAL_USERS[0]);
+  // Initialize from storage to avoid hydration mismatch
+  const [users, setUsers] = useState<User[]>([]);
+  
+  const [pages, setPages] = useState<Page[]>([]);
+  
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const isInitialized = useRef(false);
 
-  // Sync with localStorage on client mount to prevent hydration mismatch
+  // Initialize authentication on mount
   useEffect(() => {
-    const loadedUsers = getStoredUsers();
-    const loadedPages = getStoredPages();
-    const loadedContacts = getStoredContacts();
+    if (typeof window === 'undefined' || isInitialized.current) return;
 
-
-    const initiatValsFromStorage = () => {
-      setUsers(loadedUsers);
-      setPages(loadedPages);
-      setContacts(loadedContacts);
-    };
-
-    initiatValsFromStorage();
-
-    const initiatCurrentUser = (val: User | null) => {
-      setCurrentUser(val);
-    };
-
-    const savedUserEmail = localStorage.getItem('business_dev_session_email');
-    if (savedUserEmail) {
-      const found = loadedUsers.find((u) => u.email === savedUserEmail);
-      if (found && found.isActive) {
-        initiatCurrentUser(found);
-      } else if (loadedUsers.length > 0) {
-        initiatCurrentUser(loadedUsers[0]);
+    const initAuth = async () => {
+      const tokens = getAuthTokens();
+      
+      // No tokens or email - user is not logged in
+      if (!hasAuthTokens()) {
+        setIsAuthLoading(false);
+        return;
       }
-    } else if (loadedUsers.length > 0) {
-      initiatCurrentUser(loadedUsers[0]);
-    }
 
+      // If we have a token or refresh token, try to fetch current user
+      if (tokens.accessToken || tokens.refreshToken) {
+        try {
+          // Try to fetch the current user from API
+          const fetchUser = await getCurrentUserApi();
+      console.log(fetchUser)
+          const userData=fetchUser.data
+          console.log(userData)
+          const authenticatedUser: User = {
+            id: userData.id,
+            fullName: userData.fullName,
+            email: userData.email,
+            password: '',
+            role: userData.role,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          
+          setCurrentUser(authenticatedUser);
+          
+          // Update stored email if different
+          if (tokens.email !== userData.email) {
+            setAuthTokens({
+              accessToken: tokens.accessToken!,
+              refreshToken: tokens.refreshToken || undefined,
+              email: userData.email,
+            });
+          }
+        } catch (error) {
+          console.error('Auth initialization failed:', error);
+          
+          // If API fails and we have a saved email, try fallback to localStorage
+          if (tokens.email) {
+            const loadedUsers = getStoredUsers();
+            const found = loadedUsers.find((u) => u.email === tokens.email);
+            
+            if (found && found.isActive) {
+              setCurrentUser(found);
+            } else {
+              // Clear invalid session
+              clearAuthTokens();
+            }
+          } else {
+            // No saved email, clear everything
+            clearAuthTokens();
+          }
+        } finally {
+          setIsAuthLoading(false);
+        }
+      } else {
+        setIsAuthLoading(false);
+      }
+    };
+
+    initAuth();
     isInitialized.current = true;
   }, []);
 
   const login = async (email: string, password?: string) => {
     try {
       const response = await loginWithApi({ email, password: password || '' });
+      
       const loggedUser: User = {
         id: response.user.id,
         fullName: response.user.fullName,
@@ -89,15 +134,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       setCurrentUser(loggedUser);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('business_dev_session_email', loggedUser.email);
-        localStorage.setItem('business_dev_access_token', response.accessToken);
-      }
+      
+      // Store tokens using helper function
+      setAuthTokens({
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+        email: loggedUser.email,
+      });
 
       return { success: true, message: `Welcome back, ${loggedUser.fullName}!` };
     } catch (error) {
-      // Fallback to local stored/initial users if API server is not available
+      // Fallback to local users
       const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+      
       if (found) {
         if (!found.isActive) {
           return { success: false, message: 'Account is deactivated. Contact an administrator.' };
@@ -105,13 +154,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (password && found.password && found.password !== password && !found.password.startsWith('$2')) {
           return { success: false, message: 'Invalid password.' };
         }
+        
         setCurrentUser(found);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('business_dev_session_email', found.email);
-          localStorage.setItem('business_dev_access_token', 'mock_token_' + found.id);
-        }
+        
+        // Store tokens for fallback user
+        setAuthTokens({
+          accessToken: 'mock_token_' + found.id,
+          email: found.email,
+        });
+        
         return { success: true, message: `Welcome back, ${found.fullName}!` };
       }
+      
       const message = error instanceof Error ? error.message : 'Login failed.';
       return { success: false, message };
     }
@@ -119,32 +173,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     setCurrentUser(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('business_dev_session_email');
-      localStorage.removeItem('business_dev_access_token');
-    }
-  };
-
-  const createUser = (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (currentUser?.role !== 'admin') {
-      return { success: false, message: 'Permission denied: Only Admin can create users.' };
-    }
-    const existing = users.find((u) => u.email.toLowerCase() === userData.email.toLowerCase());
-    if (existing) {
-      return { success: false, message: 'A user with this email address already exists.' };
-    }
-
-    const newUser: User = {
-      ...userData,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    const nextUsers = [newUser, ...users];
-    setUsers(nextUsers);
-    saveUsers(nextUsers);
-    return { success: true, message: `User ${newUser.fullName} successfully created!` };
+    clearAuthTokens();
+    window.location.href = '/login';
   };
 
   const updateUser = (id: string, updatedFields: Partial<User>) => {
@@ -173,52 +203,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     return { success: true, message: 'User updated successfully.' };
-  };
-
-  const deleteUser = (id: string) => {
-    if (currentUser?.role !== 'admin') {
-      return { success: false, message: 'Permission denied: Only Admin can delete users.' };
-    }
-    if (currentUser?.id === id) {
-      return { success: false, message: 'Cannot delete your own active session account.' };
-    }
-
-    const nextUsers = users.filter((u) => u.id !== id);
-    setUsers(nextUsers);
-    saveUsers(nextUsers);
-    return { success: true, message: 'User deleted successfully.' };
-  };
-
-  const createPage = (slug: string, initialContent?: Record<string, any>) => {
-    if (currentUser?.role !== 'admin' && currentUser?.role !== 'editor') {
-      return { success: false, message: 'Permission denied: Only Admin or Editor can create pages.' };
-    }
-
-    const formattedSlug = slug.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    if (!formattedSlug) {
-      return { success: false, message: 'Invalid slug specified.' };
-    }
-
-    if (pages.some((p) => p.slug === formattedSlug)) {
-      return { success: false, message: 'A page with this slug already exists.' };
-    }
-
-    const newPage: Page = {
-      id: pages.length ? Math.max(...pages.map((p) => p.id)) + 1 : 1,
-      slug: formattedSlug,
-      content: initialContent || {
-        title: `${slug.toUpperCase()} Page Title`,
-        metaDescription: 'Enterprise platform documentation and details.',
-      },
-      updatedByEmail: currentUser.email,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    const nextPages = [newPage, ...pages];
-    setPages(nextPages);
-    savePages(nextPages);
-    return { success: true, message: `Page /${formattedSlug} created successfully!`, page: newPage };
   };
 
   const updatePage = (id: number, content: Record<string, any>, newSlug?: string) => {
@@ -256,43 +240,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true, message: 'Page configuration updated successfully.' };
   };
 
-  const deletePage = (id: number) => {
-    if (currentUser?.role !== 'admin' && currentUser?.role !== 'editor') {
-      return { success: false, message: 'Permission denied: Only Admin or Editor can delete pages.' };
-    }
-
-    const nextPages = pages.filter((p) => p.id !== id);
-    setPages(nextPages);
-    savePages(nextPages);
-    return { success: true, message: 'Page removed successfully.' };
-  };
-
-  const createContact = (contactData: Omit<Contact, 'id' | 'createdAt' | 'status'>) => {
-    const newContact: Contact = {
-      ...contactData,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      status: 'new',
-    };
-
-    const nextContacts = [newContact, ...contacts];
-    setContacts(nextContacts);
-    saveContacts(nextContacts);
-    return { success: true, message: 'Contact entry logged successfully!' };
-  };
-
   const updateContactStatus = (id: string, status: ContactStatus) => {
     const nextContacts = contacts.map((c) => (c.id === id ? { ...c, status } : c));
     setContacts(nextContacts);
     saveContacts(nextContacts);
     return { success: true, message: `Status updated to ${status}` };
-  };
-
-  const deleteContact = (id: string) => {
-    const nextContacts = contacts.filter((c) => c.id !== id);
-    setContacts(nextContacts);
-    saveContacts(nextContacts);
-    return { success: true, message: 'Contact inquiry deleted successfully' };
   };
 
   return (
@@ -302,17 +254,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         users,
         pages,
         contacts,
+        isAuthLoading,
         login,
         logout,
-        createUser,
         updateUser,
-        deleteUser,
-        createPage,
         updatePage,
-        deletePage,
-        createContact,
         updateContactStatus,
-        deleteContact,
       }}
     >
       {children}

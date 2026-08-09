@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Layers, LogOut, Shield, ChevronDown, Check, PanelLeft } from 'lucide-react';
-import { UserRole } from '@/lib/types';
+import {  LogOut, PanelLeft } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 interface HeaderProps {
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -16,9 +17,6 @@ export function Header({ onShowToast, isSidebarOpen = true, onToggleSidebar }: H
   const { currentUser, logout } = useAuth();
   const { showToast: ctxToast } = useToast();
   const showToast = onShowToast || ctxToast;
-
-
-
 
   return (
     <header className="sticky top-0 z-40 backdrop-blur-md bg-white/90 border-b border-slate-200/90 transition-all duration-300">
@@ -39,18 +37,15 @@ export function Header({ onShowToast, isSidebarOpen = true, onToggleSidebar }: H
             </button>
           )}
 
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#f43f5e] via-[#e11d48] to-[#9333ea] flex items-center justify-center text-white shadow-[0_4px_12px_rgba(244,63,94,0.3)] border border-white/30 shrink-0">
-            <Layers size={18} className="sm:hidden" />
-            <Layers size={20} className="hidden sm:block" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <div className="font-sans text-sm sm:text-base md:text-lg font-black text-slate-900 tracking-tight leading-tight truncate">
-              BUSINESS <span className="bg-gradient-to-r from-[#e11d48] to-[#9333ea] bg-clip-text text-transparent">DEVELOPER</span>
-            </div>
-            <div className="text-[0.55rem] sm:text-[0.62rem] tracking-[1.2px] text-slate-500 font-bold mt-0.2 uppercase truncate">
-              ADMIN DASHBOARD
-            </div>
-          </div>
+<Link href="/dashboard">
+               <Image
+              src="/logo.png"
+              alt="Business Strategy"
+              width={4096}
+              height={1204}
+              className="h-10 w-auto object-contain cursor-pointer"
+            />
+</Link>
         </div>
 
         {/* Right Controls */}
@@ -59,7 +54,7 @@ export function Header({ onShowToast, isSidebarOpen = true, onToggleSidebar }: H
           {/* User Profile Summary - Hidden on mobile, compact on desktop */}
           <div className="hidden sm:flex items-center gap-2 bg-slate-100/80 border border-slate-200 px-3 py-1.5 rounded-xl">
             <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#f43f5e] to-[#9333ea] flex items-center justify-center font-bold text-white text-[0.7rem]">
-              {currentUser?.fullName.substring(0, 1) || 'A'}
+                 {(currentUser?.fullName &&typeof currentUser.fullName ==="string")?currentUser.fullName.slice(0,2): 'A'}
             </div>
             <div className="flex flex-col text-left">
               <span className="font-bold text-xs text-slate-900 leading-tight">

@@ -28,12 +28,12 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
     if (onNavigate) {
       onNavigate(tab);
     } else {
-      if (tab === 'overview') router.push('/');
+      if (tab === 'overview') router.push('/dashboard');
       else router.push(`/${tab}`);
     }
   };
 
-  const { currentUser, switchRole } = useAuth();
+  const { currentUser } = useAuth();
 
   const { data: statsApiData } = useAdminStatsQuery();
   const stats = statsApiData ? mapAdminStatsApiToDashboard(statsApiData) : undefined;
@@ -48,7 +48,7 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
       <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-800">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-80 h-80 bg-[radial-gradient(circle,rgba(244,63,94,0.25)_0%,rgba(168,85,247,0.12)_50%,rgba(15,23,42,0)_70%)] rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <div className="inline-flex items-center gap-2 bg-[#f43f5e]/20 border border-[#f43f5e]/40 text-rose-300 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider max-w-fit">
               <Zap size={14} className="text-[#f43f5e]" />
@@ -62,54 +62,26 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
             </p>
           </div>
 
-          {/* Quick Role Switcher Panel */}
-          <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl flex flex-col gap-2.5 min-w-[260px] shadow-lg">
-            <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
-              <span className="text-slate-400 font-bold uppercase tracking-wider text-[0.68rem] flex items-center gap-1.5">
-                <Shield size={13} className="text-purple-400" /> Active Role Persona
-              </span>
-              <span className="font-black text-rose-400 uppercase">{currentUser?.role}</span>
+          {/* User Info Display */}
+          <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl flex items-center justify-between max-w-md shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f43f5e] to-[#9333ea] text-white font-black text-sm flex items-center justify-center shadow-2xs">
+                {(currentUser?.fullName &&typeof currentUser.fullName ==="string")?currentUser.fullName.slice(0,2): 'A'}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-white">
+                  {currentUser?.fullName}
+                </span>
+                <span className="text-xs text-slate-400 font-mono">
+                  {currentUser?.email}
+                </span>
+              </div>
             </div>
-
-            <div className="grid grid-cols-3 gap-1.5 pt-1">
-              <button
-                onClick={() => {
-                  switchRole('admin');
-                  showToast('Session switched to Admin persona', 'success');
-                }}
-                className={`py-1.5 px-2 rounded-lg text-[0.7rem] font-extrabold uppercase transition-all cursor-pointer ${currentUser?.role === 'admin'
-                  ? 'bg-[#f43f5e] text-white shadow-sm'
-                  : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
-                  }`}
-              >
-                Admin
-              </button>
-
-              <button
-                onClick={() => {
-                  switchRole('editor');
-                  showToast('Session switched to Editor persona', 'info');
-                }}
-                className={`py-1.5 px-2 rounded-lg text-[0.7rem] font-extrabold uppercase transition-all cursor-pointer ${currentUser?.role === 'editor'
-                  ? 'bg-purple-600 text-white shadow-sm'
-                  : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
-                  }`}
-              >
-                Editor
-              </button>
-
-              <button
-                onClick={() => {
-                  switchRole('user');
-                  showToast('Session switched to User persona', 'info');
-                }}
-                className={`py-1.5 px-2 rounded-lg text-[0.7rem] font-extrabold uppercase transition-all cursor-pointer ${currentUser?.role === 'user'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
-                  }`}
-              >
-                User
-              </button>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#f43f5e]/20 border border-[#f43f5e]/40">
+              <Shield size={13} className="text-rose-300" />
+              <span className="text-xs font-black text-rose-300 uppercase">
+                {currentUser?.role}
+              </span>
             </div>
           </div>
         </div>
@@ -157,7 +129,7 @@ export function OverviewStats({ onNavigate, onShowToast }: OverviewStatsProps) {
                 System Accounts Directory
               </div>
               <div className="mt-3 pt-3 border-t border-slate-200/80 text-[0.72rem] text-slate-400">
-                Switch role to Admin to view user accounts
+                Admin role required to manage user accounts
               </div>
             </div>
           </div>

@@ -31,8 +31,8 @@ export function ArrayItemEditor({ item, index, parentKey, mode, onUpdate, onDele
         <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 space-y-3 shadow-2xs hover:border-slate-300 transition-colors">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold font-mono text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                        Index [{index}]
+                    <span className="text-[13px] font-bold font-mono text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                        {index+1}
                     </span>
 
                     <CustomSelect

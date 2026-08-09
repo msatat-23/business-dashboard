@@ -31,7 +31,7 @@ interface ContactManagementProps {
 export function ContactManagement({ onShowToast }: ContactManagementProps) {
   const { showToast: ctxToast } = useToast();
   const showToast = onShowToast || ctxToast;
-  const { users, updateContactStatus, deleteContact } = useAuth();
+  const { users, updateContactStatus } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -154,17 +154,11 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
             setSelectedContact(null);
           }
         },
-        onError: () => {
-          const res = deleteContact(id);
-          if (res.success) {
-            showToast(res.message, 'success');
-            if (selectedContact && selectedContact.id === id) {
-              setIsDetailOpen(false);
-              setSelectedContact(null);
-            }
-          } else {
-            showToast('Failed to delete contact inquiry', 'error');
-          }
+        onError: (err) => {
+          showToast(
+            err instanceof Error ? err.message : 'Failed to delete contact inquiry',
+            'error'
+          );
         },
       });
     }

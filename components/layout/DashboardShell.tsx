@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
-import { LoginForm } from '@/components/auth/LoginForm';
 import { ShieldAlert } from 'lucide-react';
 
 interface DashboardShellProps {
@@ -14,7 +13,7 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ children }: DashboardShellProps) {
-  const { currentUser } = useAuth();
+  const { currentUser, isAuthLoading } = useAuth();
   const { showToast } = useToast();
   const pathname = usePathname();
   const router = useRouter();
@@ -24,12 +23,42 @@ export function DashboardShell({ children }: DashboardShellProps) {
     setIsSidebarOpen((prev) => !prev);
   };
 
-  // If user is not authenticated or logged out, show Login Form
-  if (!currentUser) {
-    return <LoginForm onShowToast={showToast} />;
+  // Redirect to login if not authenticated, or redirect root to dashboard
+  useEffect(() => {
+    // Wait for auth to finish loading before making redirect decisions
+    if (isAuthLoading) return;
+
+    if (!currentUser && pathname !== '/login') {
+      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+    } else if (currentUser && pathname === '/') {
+      router.replace('/dashboard');
+    }
+  }, [currentUser, pathname, router, isAuthLoading]);
+
+  // Show loading state while auth is initializing
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#f43f5e] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="mt-4 text-sm text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
-  const isAccessRestricted = currentUser.role !== 'admin' && pathname === '/users';
+  // If user is not authenticated and not on login page, show nothing while redirecting
+  if (!currentUser && pathname !== '/login') {
+    return null;
+  }
+
+  // If on login page, just render the children (login page content)
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
+
+  // At this point, we know currentUser is not null (redirected to login if null)
+  const isAccessRestricted = currentUser?.role !== 'admin' && pathname === '/users';
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans selection:bg-[#f43f5e] selection:text-white">
@@ -64,10 +93,10 @@ export function DashboardShell({ children }: DashboardShellProps) {
               <h2 className="text-xl font-bold text-slate-900">Access Restricted</h2>
               <p className="text-xs text-slate-600 max-w-md">
                 User Management is restricted to Admin role users. Your current active role is{' '}
-                <strong className="uppercase font-mono text-[#e11d48]">{currentUser.role}</strong>.
+                <strong className="uppercase font-mono text-[#e11d48]">{currentUser?.role}</strong>.
               </p>
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/dashboard')}
                 className="mt-2 bg-[#e11d48] text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-rose-700 transition-colors"
               >
                 Return to Dashboard Overview
