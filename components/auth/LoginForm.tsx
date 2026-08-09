@@ -30,7 +30,7 @@ export function LoginForm({ onShowToast }: LoginFormProps) {
 
     try {
       const res = await login(values.email, values.password);
-      // console.log(res)
+
       if (!res.success) {
         setErrorMsg(res.message);
         onShowToast(res.message, 'error');

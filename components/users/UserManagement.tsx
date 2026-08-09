@@ -74,7 +74,7 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
   }, [searchTerm, roleFilter, statusFilter, currentPage, pageSize]);
 
   const { data: apiResponse, isLoading, isError, error, refetch } = useUsersQuery(queryParams);
-  // console.log(apiResponse)
+
 
   // Extract data array from paginated response
 

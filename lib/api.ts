@@ -92,7 +92,7 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
         ...options,
         headers,
     });
-    console.log(response)
+
 
     if (!response.ok) {
         let payload: ApiError | undefined;
