@@ -23,6 +23,7 @@ import {
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
+import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
 
 interface ContactManagementProps {
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -37,6 +38,8 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const [deleteContactId, setDeleteContactId] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -145,23 +148,40 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this contact inquiry record?')) {
-      deleteContactMutation.mutate(id, {
+    setDeleteContactId(id);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteContactId) {
+      return;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      deleteContactMutation.mutate(deleteContactId, {
         onSuccess: () => {
           showToast('Contact inquiry record deleted successfully.', 'success');
-          if (selectedContact && selectedContact.id === id) {
+
+          if (selectedContact && selectedContact.id === deleteContactId) {
             setIsDetailOpen(false);
             setSelectedContact(null);
           }
+
+          setDeleteContactId(null);
+          resolve();
         },
+
         onError: (err) => {
           showToast(
-            err instanceof Error ? err.message : 'Failed to delete contact inquiry',
-            'error'
+            err instanceof Error
+              ? err.message
+              : 'Failed to delete contact inquiry',
+            'error',
           );
+
+          reject(err);
         },
       });
-    }
+    });
   };
 
   // Requirement 9: Fix status breaking word text with whitespace-nowrap and non-breaking badges
@@ -485,6 +505,16 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
         submittedUser={linkedUser}
         onUpdateStatus={handleStatusChange}
         onDelete={handleDelete}
+      />
+
+      <ActionConfirmationModal
+        isOpen={deleteContactId !== null}
+        onClose={() => setDeleteContactId(null)}
+        onConfirm={confirmDelete}
+        action="delete"
+        title="Delete Contact Inquiry"
+        description="Are you sure you want to delete this contact inquiry record? This action is permanent and cannot be undone."
+        confirmLabel="Delete Inquiry"
       />
     </div>
   );

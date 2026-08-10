@@ -103,7 +103,7 @@ export function ContentEditorModal({
             title={`Content Management — ${slug || 'New Content'}`}
             maxWidth="max-w-5xl"
         >
-            <div className="space-y-5">
+            <div className="space-y-5 pb-12">
                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
                     <div className="flex items-center gap-2">
                         <FileText
@@ -172,7 +172,7 @@ export function ContentEditorModal({
                     Add Content Field
                 </button>
 
-                <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
+                <div className="absolute bottom-0 left-0 right-0 z-10 bg-white p-5 flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
                     <button
                         type="button"
                         onClick={onClose}

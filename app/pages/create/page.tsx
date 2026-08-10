@@ -69,7 +69,7 @@ export default function CreatePage() {
   return (
     <div className="space-y-6 font-sans pb-12">
       {/* Top Header & Navigation Bar */}
-      <div className="sticky top-20 z-40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs">
+      <div className="sticky top-20 z-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs">
         <div className="flex items-center gap-3">
           <Link
             href="/pages"

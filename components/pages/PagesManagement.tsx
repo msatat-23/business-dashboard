@@ -23,11 +23,15 @@ import {
   Globe,
 } from 'lucide-react';
 
+import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
+
 interface PagesManagementProps {
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 export function PagesManagement({ onShowToast }: PagesManagementProps) {
+
+  const [deleteTarget, setDeleteTarget] = useState<Page | null>(null);
 
   const { showToast: ctxToast } = useToast();
   const showToast = onShowToast || ctxToast;
@@ -46,18 +50,39 @@ export function PagesManagement({ onShowToast }: PagesManagementProps) {
   );
 
   const handleDeletePage = (page: Page) => {
-    if (confirm(`Are you sure you want to delete page "/${page.slug}"?`)) {
-      deletePageMutation.mutate(page.id, {
-        onSuccess: () => showToast('Page removed successfully.', 'success'),
-        onError: (err) => showToast(err instanceof Error ? err.message : 'Page delete failed.', 'error'),
-      });
+    setDeleteTarget(page);
+  };
+
+  const confirmDeletePage = () => {
+    if (!deleteTarget) {
+      return;
     }
+
+    return new Promise<void>((resolve, reject) => {
+      deletePageMutation.mutate(deleteTarget.id, {
+        onSuccess: () => {
+          showToast('Page removed successfully.', 'success');
+          setDeleteTarget(null);
+          resolve();
+        },
+
+        onError: (err) => {
+          const error =
+            err instanceof Error
+              ? err
+              : new Error('Page delete failed.');
+
+          showToast(error.message, 'error');
+          reject(error);
+        },
+      });
+    });
   };
 
   return (
     <div className="flex flex-col gap-10 w-full font-sans">
       {/* Header */}
-    <div className="sticky top-24 z-40 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 pt-2 pl-2 pr-2 rounded-xl border-b border-slate-200 bg-white">
+      <div className="sticky top-24 z-3 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 pt-2 pl-2 pr-2 rounded-xl border-b border-slate-200 bg-white">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="p-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-[#e11d48]">
@@ -165,8 +190,8 @@ export function PagesManagement({ onShowToast }: PagesManagementProps) {
                       const valType = Array.isArray(val)
                         ? `Array [${val.length}]`
                         : typeof val === 'object' && val !== null
-                        ? `Object {${Object.keys(val).length}}`
-                        : typeof val;
+                          ? `Object {${Object.keys(val).length}}`
+                          : typeof val;
 
                       return (
                         <div key={k} className="flex items-center justify-between truncate">
@@ -216,6 +241,15 @@ export function PagesManagement({ onShowToast }: PagesManagementProps) {
           })
         )}
       </div>
+      <ActionConfirmationModal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeletePage}
+        action="delete"
+        title="Delete Page"
+        itemName={deleteTarget ? `/${deleteTarget.slug}` : undefined}
+        confirmLabel="Delete Page"
+      />
     </div>
   );
 }

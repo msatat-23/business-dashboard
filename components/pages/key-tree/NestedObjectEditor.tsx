@@ -6,6 +6,7 @@ import { CustomSelect } from '@/components/ui/CustomSelect';
 import { KeyNode, KeyType, generateId } from './types';
 import { TYPE_OPTIONS } from './type-options';
 import { NodeEditorRow } from './NodeEditorRow';
+import { useToast } from '@/context/ToastContext';
 
 interface NestedObjectEditorProps {
     nodes: KeyNode[];
@@ -17,13 +18,14 @@ interface NestedObjectEditorProps {
 export function NestedObjectEditor({ nodes, onChange, parentKey, mode }: NestedObjectEditorProps) {
     const [nestedKeyName, setNestedKeyName] = useState('');
     const [nestedKeyType, setNestedKeyType] = useState<KeyType>('plainText');
+    const { showToast } = useToast();
 
     const handleAddNestedKey = () => {
         const trimmed = nestedKeyName.trim();
         if (!trimmed) return;
 
         if (nodes.some((n) => n.key === trimmed)) {
-            alert(`Property key "${trimmed}" already exists inside object "${parentKey}".`);
+            showToast(`Property key "${trimmed}" already exists inside object "${parentKey}".`, 'error');
             return;
         }
 

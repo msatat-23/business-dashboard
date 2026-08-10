@@ -14,7 +14,7 @@ export function ContentPageHeader({
     onCreateClick,
 }: ContentPageHeaderProps) {
     return (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-200">
+        <div className="sticky top-20 z-6 bg-white rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 border-b border-slate-200">
             <div>
                 <div className="flex items-center gap-2.5">
                     <div className="p-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-[#e11d48]">

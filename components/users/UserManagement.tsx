@@ -31,6 +31,8 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
+import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
+
 interface UserManagementProps {
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
 }
@@ -43,6 +45,8 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -134,12 +138,33 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
   };
 
   const handleDelete = (user: User) => {
-    if (confirm(`Are you sure you want to delete user "${user.fullName}" (${user.email})?`)) {
-      deleteUserMutation.mutate(user.id, {
-        onSuccess: () => showToast('User deleted successfully.', 'success'),
-        onError: (err) => showToast(err instanceof Error ? err.message : 'Delete failed.', 'error'),
-      });
+    setDeleteTarget(user);
+  };
+
+  const confirmDeleteUser = () => {
+    if (!deleteTarget) {
+      return;
     }
+
+    return new Promise<void>((resolve, reject) => {
+      deleteUserMutation.mutate(deleteTarget.id, {
+        onSuccess: () => {
+          showToast('User deleted successfully.', 'success');
+          setDeleteTarget(null);
+          resolve();
+        },
+
+        onError: (err) => {
+          const error =
+            err instanceof Error
+              ? err
+              : new Error('Delete failed.');
+
+          showToast(error.message, 'error');
+          reject(error);
+        },
+      });
+    });
   };
 
   const handleModalSubmit = (userData: {
@@ -475,6 +500,21 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
         onSubmit={handleModalSubmit}
         initialUser={selectedUser}
       />
+
+      <ActionConfirmationModal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteUser}
+        action="delete"
+        title="Delete User"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete user "${deleteTarget.fullName}" (${deleteTarget.email})? This action is permanent and cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete User"
+      />
+
     </div>
   );
 }

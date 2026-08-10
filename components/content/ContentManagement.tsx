@@ -18,6 +18,8 @@ import { ContentRoleBanner } from './ContentRoleBanner';
 import { ContentSearchBar } from './ContentSearchBar';
 import { ContentList } from './ContentList';
 
+import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
+
 interface ContentManagementProps {
     onShowToast?: (
         msg: string,
@@ -39,6 +41,8 @@ export function ContentManagement({
 }: ContentManagementProps) {
     const { showToast: contextToast } = useToast();
     const showToast = onShowToast ?? contextToast;
+
+    const [deleteTarget, setDeleteTarget] = useState<Content | null>(null);
     const { currentUser } = useAuth();
 
     const {
@@ -82,22 +86,32 @@ export function ContentManagement({
     };
 
     const handleDeleteContent = (content: Content) => {
-        if (!confirm(`Are you sure you want to delete content "/${content.slug}"?`)) {
+        setDeleteTarget(content);
+    };
+
+    const confirmDeleteContent = () => {
+        if (!deleteTarget) {
             return;
         }
 
-        deleteContentMutation.mutate(content.id, {
-            onSuccess: () => {
-                showToast('Content removed successfully.', 'success');
-            },
-            onError: (mutationError) => {
-                showToast(
-                    mutationError instanceof Error
-                        ? mutationError.message
-                        : 'Content delete failed.',
-                    'error',
-                );
-            },
+        return new Promise<void>((resolve, reject) => {
+            deleteContentMutation.mutate(deleteTarget.id, {
+                onSuccess: () => {
+                    showToast('Content removed successfully.', 'success');
+                    setDeleteTarget(null);
+                    resolve();
+                },
+
+                onError: (mutationError) => {
+                    const error =
+                        mutationError instanceof Error
+                            ? mutationError
+                            : new Error('Content delete failed.');
+
+                    showToast(error.message, 'error');
+                    reject(error);
+                },
+            });
         });
     };
 
@@ -146,6 +160,16 @@ export function ContentManagement({
                 canEdit={canEdit}
                 onEdit={openEditEditor}
                 onDelete={handleDeleteContent}
+            />
+
+            <ActionConfirmationModal
+                isOpen={deleteTarget !== null}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={confirmDeleteContent}
+                action="delete"
+                title="Delete Content"
+                itemName={deleteTarget ? `/${deleteTarget.slug}` : undefined}
+                confirmLabel="Delete Content"
             />
 
             {selectedContent && (

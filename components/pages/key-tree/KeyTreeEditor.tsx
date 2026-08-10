@@ -6,6 +6,7 @@ import { CustomSelect } from '@/components/ui/CustomSelect';
 import { KeyNode, KeyType, generateId } from './types';
 import { TYPE_OPTIONS } from './type-options';
 import { NodeEditorRow } from './NodeEditorRow';
+import { useToast } from '@/context/ToastContext';
 
 interface KeyTreeEditorProps {
     nodes: KeyNode[];
@@ -16,13 +17,14 @@ interface KeyTreeEditorProps {
 export function KeyTreeEditor({ nodes, onChange, mode = 'create' }: KeyTreeEditorProps) {
     const [newKeyName, setNewKeyName] = useState('');
     const [newKeyType, setNewKeyType] = useState<KeyType>('plainText');
+    const { showToast } = useToast();
 
     const handleAddKey = () => {
         const trimmed = newKeyName.trim();
         if (!trimmed) return;
 
         if (nodes.some((n) => n.key === trimmed)) {
-            alert(`Property key "${trimmed}" already exists at this level.`);
+            showToast(`Property key "${trimmed}" already exists at this level.`, 'error');
             return;
         }
 
