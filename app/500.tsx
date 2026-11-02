@@ -17,17 +17,17 @@ export default function ServerError() {
                 <ServerCrash size={64} className="text-white" strokeWidth={1.5} />
               </div>
             </div>
-            
+
             <h1 className="text-7xl md:text-8xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-4">
               500
             </h1>
-            
+
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">
               Internal Server Error
             </h2>
-            
+
             <p className="text-slate-600 max-w-md text-sm md:text-base leading-relaxed">
-              Something went wrong on our servers. We've been notified and are working to fix the issue. 
+              Something went wrong on our servers. We{"'"}ve been notified and are working to fix the issue.
               Please try again in a few moments.
             </p>
           </div>
@@ -40,7 +40,7 @@ export default function ServerError() {
               <ArrowLeft size={18} />
               Go Back
             </button>
-            
+
             <button
               onClick={() => router.push('/dashboard')}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#e11d48] to-rose-600 hover:from-[#be123c] hover:to-rose-700 text-white rounded-xl font-semibold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-rose-500/30"
