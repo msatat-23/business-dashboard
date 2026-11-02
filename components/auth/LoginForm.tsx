@@ -21,13 +21,8 @@ export function LoginForm({ onShowToast }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/dashboard';
-  
-  const { register, handleSubmit, formState } = useForm<LoginFormValues>({
-    defaultValues: {
-      email: 'admin@business-dev.com',
-      password: 'AdminSecretPassword2026!',
-    },
-  });
+
+  const { register, handleSubmit, formState } = useForm<LoginFormValues>({});
   const [errorMsg, setErrorMsg] = useState('');
 
   const onSubmit: SubmitHandler<LoginFormValues> = async (values) => {
@@ -85,7 +80,7 @@ export function LoginForm({ onShowToast }: LoginFormProps) {
               type="email"
               required
               {...register('email')}
-              placeholder="e.g. admin@business-dev.com"
+              placeholder="admin@gmail.com"
               className="w-full font-sans text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/80 text-slate-900 outline-none focus:bg-white focus:border-[#f43f5e] focus:ring-2 focus:ring-[#f43f5e]/20 transition-all placeholder:text-slate-400"
             />
           </div>
@@ -93,7 +88,7 @@ export function LoginForm({ onShowToast }: LoginFormProps) {
           <PasswordInput
             label="Account Password"
             {...register('password')}
-            placeholder="Enter password"
+            placeholder="********"
             required
           />
 
