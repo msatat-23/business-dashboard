@@ -6,7 +6,7 @@ import { ToastProvider } from '@/context/ToastContext';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 
 export const metadata: Metadata = {
-  title: 'Business Developer | Admin Dashboard Platform',
+  title: 'Business Strategy | Admin Dashboard Platform',
   description:
     'Enterprise administration portal for user management, dynamic page CMS, and client contact inquiry management.',
 };

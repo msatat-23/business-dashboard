@@ -6,12 +6,6 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useCreatePageMutation } from '@/hooks/use-pages-api';
-import {
-  KeyTreeEditor,
-  KeyNode,
-  treeToRecord,
-  generateId,
-} from '@/components/pages/KeyTreeEditor';
 import { CloudinaryImageModal } from '@/components/pages/CloudinaryImageModal';
 import {
   ArrowLeft,
@@ -24,10 +18,16 @@ import {
   Globe,
 } from 'lucide-react';
 
+import {
+  KeyTreeEditor,
+  KeyNode,
+  treeToRecord,
+  generateId,
+} from '@/components/pages/key-tree';
+
 export default function CreatePage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { currentUser } = useAuth();
   const createPageMutation = useCreatePageMutation();
 
   const [slugName, setSlugName] = useState('');
@@ -35,19 +35,12 @@ export default function CreatePage() {
     {
       id: generateId(),
       key: 'title',
-      type: 'text',
-      valueText: '<h1>Welcome Page</h1>',
-    },
-    {
-      id: generateId(),
-      key: 'subtitle',
-      type: 'text',
-      valueText: 'Enter your introductory summary text here.',
+      type: 'plainText',
+      valueText: 'Welcome Page',
     },
   ]);
 
   const [isCloudinaryOpen, setIsCloudinaryOpen] = useState(false);
-  const [showJsonPreview, setShowJsonPreview] = useState(true);
 
   // Compute live JSON output
   const jsonContent = treeToRecord(nodes);
@@ -76,7 +69,7 @@ export default function CreatePage() {
   return (
     <div className="space-y-6 font-sans pb-12">
       {/* Top Header & Navigation Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs">
+      <div className="sticky top-20 z-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs">
         <div className="flex items-center gap-3">
           <Link
             href="/pages"
@@ -118,7 +111,7 @@ export default function CreatePage() {
       </div>
 
       {/* Main Grid: Builder vs Live JSON */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="">
         {/* Left / Main Editor Section */}
         <div className="lg:col-span-8 space-y-6">
           {/* Slug Name Input Card */}
@@ -164,48 +157,11 @@ export default function CreatePage() {
             <KeyTreeEditor
               nodes={nodes}
               onChange={setNodes}
+              mode="create"
             />
           </div>
         </div>
 
-        {/* Right / Live JSON Preview Sidebar */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-slate-900 text-white border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3 sticky top-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Code2 size={16} className="text-rose-400" />
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Live JSON Output</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowJsonPreview(!showJsonPreview)}
-                className="text-[11px] text-slate-400 hover:text-white font-mono"
-              >
-                {showJsonPreview ? 'Hide' : 'Show'}
-              </button>
-            </div>
-
-            {showJsonPreview && (
-              <pre className="p-3 bg-slate-950 rounded-xl text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-[500px] border border-slate-800/80 leading-relaxed">
-                {JSON.stringify(jsonContent, null, 2)}
-              </pre>
-            )}
-
-            <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 text-[11px] text-slate-300 space-y-1">
-              <div className="font-bold text-white flex items-center gap-1">
-                <Info size={13} className="text-rose-400" />
-                <span>Payload Structure</span>
-              </div>
-              <p className="text-slate-400 leading-normal">
-                This JSON object represents the raw API content stored under slug{' '}
-                <strong className="text-rose-300 font-mono">
-                  {slugName.trim() ? slugName.trim() : '(unnamed)'}
-                </strong>
-                .
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Cloudinary Asset Modal */}

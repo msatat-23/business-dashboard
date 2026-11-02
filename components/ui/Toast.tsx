@@ -32,7 +32,7 @@ export function Toast({ toast, onClose }: ToastProps) {
           initial={{ opacity: 0, y: 50, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.9 }}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border border-white/15 bg-[#111827] shadow-[0_10px_30px_rgba(0,0,0,0.7)] text-white text-sm max-w-md"
+          className="fixed bottom-6 right-6 z-100 flex items-center gap-3 px-4 py-3 rounded-xl border border-white/15 bg-[#111827] shadow-[0_10px_30px_rgba(0,0,0,0.7)] text-white text-sm max-w-md"
         >
           {toast.type === 'success' && <CheckCircle2 size={18} className="text-[#34d399] shrink-0" />}
           {toast.type === 'error' && <AlertCircle size={18} className="text-[#fb7185] shrink-0" />}

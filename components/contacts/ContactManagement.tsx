@@ -23,6 +23,7 @@ import {
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
+import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
 
 interface ContactManagementProps {
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -31,12 +32,14 @@ interface ContactManagementProps {
 export function ContactManagement({ onShowToast }: ContactManagementProps) {
   const { showToast: ctxToast } = useToast();
   const showToast = onShowToast || ctxToast;
-  const { users, updateContactStatus, deleteContact } = useAuth();
+  const { users, updateContactStatus } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const [deleteContactId, setDeleteContactId] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -105,13 +108,9 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
   ];
 
   // Extract total from paginated response
-  const totalItems = useMemo(() => {
-    if (!apiResponse) return 0;
-    if (Array.isArray(apiResponse)) return apiResponse.length;
-    return (apiResponse as any)?.total || 0;
-  }, [apiResponse]);
+  const totalItems = apiResponse?.meta.total ?? 0;
 
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const totalPages = apiResponse?.meta.pageCount ?? 0;
 
   const paginatedContacts = contacts;
 
@@ -149,29 +148,40 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this contact inquiry record?')) {
-      deleteContactMutation.mutate(id, {
+    setDeleteContactId(id);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteContactId) {
+      return;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      deleteContactMutation.mutate(deleteContactId, {
         onSuccess: () => {
           showToast('Contact inquiry record deleted successfully.', 'success');
-          if (selectedContact && selectedContact.id === id) {
+
+          if (selectedContact && selectedContact.id === deleteContactId) {
             setIsDetailOpen(false);
             setSelectedContact(null);
           }
+
+          setDeleteContactId(null);
+          resolve();
         },
-        onError: () => {
-          const res = deleteContact(id);
-          if (res.success) {
-            showToast(res.message, 'success');
-            if (selectedContact && selectedContact.id === id) {
-              setIsDetailOpen(false);
-              setSelectedContact(null);
-            }
-          } else {
-            showToast('Failed to delete contact inquiry', 'error');
-          }
+
+        onError: (err) => {
+          showToast(
+            err instanceof Error
+              ? err.message
+              : 'Failed to delete contact inquiry',
+            'error',
+          );
+
+          reject(err);
         },
       });
-    }
+    });
   };
 
   // Requirement 9: Fix status breaking word text with whitespace-nowrap and non-breaking badges
@@ -495,6 +505,16 @@ export function ContactManagement({ onShowToast }: ContactManagementProps) {
         submittedUser={linkedUser}
         onUpdateStatus={handleStatusChange}
         onDelete={handleDelete}
+      />
+
+      <ActionConfirmationModal
+        isOpen={deleteContactId !== null}
+        onClose={() => setDeleteContactId(null)}
+        onConfirm={confirmDelete}
+        action="delete"
+        title="Delete Contact Inquiry"
+        description="Are you sure you want to delete this contact inquiry record? This action is permanent and cannot be undone."
+        confirmLabel="Delete Inquiry"
       />
     </div>
   );

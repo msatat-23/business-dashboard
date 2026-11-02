@@ -43,7 +43,7 @@ export function CustomSelect<T extends string = string>({
   }, []);
 
   return (
-    <div ref={containerRef} className={`relative inline-block font-sans ${isOpen ? 'z-50' : 'z-10'} ${className}`}>
+    <div ref={containerRef} className={`relative inline-block font-sans ${isOpen ? 'z-5' : 'z-4'} ${className}`}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -68,11 +68,10 @@ export function CustomSelect<T extends string = string>({
                   onChange(opt.value);
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left transition-colors cursor-pointer ${
-                  isSelected
-                    ? 'bg-[#f43f5e] text-white font-bold'
-                    : 'text-slate-200 hover:bg-slate-800 hover:text-white font-medium'
-                }`}
+                className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left transition-colors cursor-pointer ${isSelected
+                  ? 'bg-[#f43f5e] text-white font-bold'
+                  : 'text-slate-200 hover:bg-slate-800 hover:text-white font-medium'
+                  }`}
               >
                 <div className="flex items-center gap-2 truncate">
                   {opt.icon && <span className="shrink-0">{opt.icon}</span>}

@@ -64,50 +64,28 @@ export function CloudinaryImageModal({
     setIsUploading(true);
     setUploadError(null);
 
-    // If Cloudinary credentials are missing or default, try direct Cloudinary upload or fallback to Data URL preview
-    if (cloudName && uploadPreset) {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', uploadPreset);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-          method: 'POST',
-          body: formData,
-        });
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData?.error?.message || 'Cloudinary upload failed.');
-        }
+      const data = await res.json();
 
-        const data = await res.json();
-        const uploadedUrl = data.secure_url || data.url;
-        setUploadSuccessUrl(uploadedUrl);
-        setImageUrl(uploadedUrl);
-      } catch (err: any) {
-        // Fallback to data URL
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64Url = reader.result as string;
-          setUploadSuccessUrl(base64Url);
-          setImageUrl(base64Url);
-          setUploadError(`Cloudinary error (${err.message}). Loaded image local preview.`);
-        };
-        reader.readAsDataURL(file);
-      } finally {
-        setIsUploading(false);
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || 'Upload failed');
       }
-    } else {
-      // Local Base64 preview fallback when cloud name isn't configured
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64Url = reader.result as string;
-        setUploadSuccessUrl(base64Url);
-        setImageUrl(base64Url);
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+
+      setUploadSuccessUrl(data.url);
+      setImageUrl(data.url);
+
+    } catch (err: any) {
+      setUploadError(err.message || 'Upload failed');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -134,11 +112,10 @@ export function CloudinaryImageModal({
           <button
             type="button"
             onClick={() => setActiveTab('upload')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'upload'
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'upload'
                 ? 'border-rose-600 text-rose-600 bg-rose-50/50'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
+              }`}
           >
             <Upload className="w-4 h-4" />
             Upload File
@@ -146,11 +123,10 @@ export function CloudinaryImageModal({
           <button
             type="button"
             onClick={() => setActiveTab('stock')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'stock'
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'stock'
                 ? 'border-rose-600 text-rose-600 bg-rose-50/50'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
+              }`}
           >
             <Sparkles className="w-4 h-4" />
             Curated Stock
@@ -158,11 +134,10 @@ export function CloudinaryImageModal({
           <button
             type="button"
             onClick={() => setActiveTab('url')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
-              activeTab === 'url'
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'url'
                 ? 'border-rose-600 text-rose-600 bg-rose-50/50'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
+              }`}
           >
             <Link className="w-4 h-4" />
             Direct URL

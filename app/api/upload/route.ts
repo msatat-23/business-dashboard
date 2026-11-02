@@ -1,48 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
+import cloudinary from '@/lib/cloudinary';
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
+
     const file = formData.get('file') as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'No file provided' },
+        { status: 400 }
+      );
     }
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || process.env.CLOUDINARY_UPLOAD_PRESET || 'ml_default';
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    // If Cloudinary credentials exist, try uploading to Cloudinary
-    if (cloudName && uploadPreset) {
-      try {
-        const cloudinaryData = new FormData();
-        cloudinaryData.append('file', file);
-        cloudinaryData.append('upload_preset', uploadPreset);
-
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-          method: 'POST',
-          body: cloudinaryData,
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const url = data.secure_url || data.url;
-          return NextResponse.json({ url, success: true });
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          folder: 'uploads',
+          resource_type: 'image',
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
         }
-      } catch {
-        // Fall back to data URL
-      }
-    }
+      ).end(buffer);
+    });
 
-    // Convert file buffer to base64 data URL as fallback
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const mimeType = file.type || 'image/png';
-    const base64 = buffer.toString('base64');
-    const dataUrl = `data:${mimeType};base64,${base64}`;
+    const data = result as {
+      secure_url: string;
+      public_id: string;
+    };
 
-    return NextResponse.json({ url: dataUrl, success: true });
+    return NextResponse.json({
+      success: true,
+      url: data.secure_url,
+      publicId: data.public_id,
+    });
+
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || 'Upload failed' }, { status: 500 });
+    console.error('Cloudinary upload error:', err);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: err?.message || 'Upload failed',
+      },
+      {
+        status: 500,
+      }
+    );
   }
 }

@@ -31,6 +31,8 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
+import { ActionConfirmationModal } from '@/components/ui/ActionConfirmationModal';
+
 interface UserManagementProps {
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
 }
@@ -38,11 +40,13 @@ interface UserManagementProps {
 export function UserManagement({ onShowToast }: UserManagementProps) {
   const { showToast: ctxToast } = useToast();
   const showToast = onShowToast || ctxToast;
-  const { currentUser, switchRole } = useAuth();
+  const { currentUser } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -74,7 +78,7 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
   }, [searchTerm, roleFilter, statusFilter, currentPage, pageSize]);
 
   const { data: apiResponse, isLoading, isError, error, refetch } = useUsersQuery(queryParams);
-  console.log(apiResponse)
+
 
   // Extract data array from paginated response
 
@@ -94,7 +98,6 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const isAdmin = currentUser?.role === 'admin';
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -117,47 +120,12 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
   }, [searchTerm, roleFilter, statusFilter]);
 
   // Extract total from paginated response
-  const totalItems = useMemo(() => {
-    if (!apiResponse) return 0;
-    if (Array.isArray(apiResponse)) return apiResponse.length;
-    return (apiResponse as any)?.total || 0;
-  }, [apiResponse]);
+  const totalItems = apiResponse?.meta.total ?? 0;
 
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const totalPages = apiResponse?.meta.pageCount ?? 0;
 
   const paginatedUsers = users;
 
-  if (!isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 sm:p-16 my-8 bg-white border border-slate-200/90 rounded-3xl text-center max-w-3xl mx-auto shadow-md">
-        <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-[#e11d48] mb-5 shadow-xs">
-          <Lock size={32} />
-        </div>
-        <span className="bg-rose-50 border border-rose-200 text-[#e11d48] px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-          Restricted Directory
-        </span>
-        <h2 className="font-sans text-2xl sm:text-3xl font-black text-slate-900 mb-3">
-          Admin Privilege Required
-        </h2>
-        <p className="font-sans text-sm text-slate-600 max-w-lg mb-6 leading-relaxed">
-          User account management, credential provisioning, and role assignment can only be accessed by system Administrators.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <button
-            onClick={() => {
-              switchRole('admin');
-              showToast('Switched to Administrator account!', 'success');
-            }}
-            className="bg-gradient-to-r from-[#f43f5e] via-[#e11d48] to-[#9333ea] text-white px-6 py-3 rounded-xl font-sans text-xs font-bold cursor-pointer shadow-[0_4px_15px_rgba(244,63,94,0.3)] hover:shadow-[0_6px_22px_rgba(244,63,94,0.45)] transition-all flex items-center gap-2"
-          >
-            <span>Switch Session to Admin</span>
-            <ArrowRight size={15} />
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const handleOpenCreateModal = () => {
     setSelectedUser(null);
@@ -170,12 +138,33 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
   };
 
   const handleDelete = (user: User) => {
-    if (confirm(`Are you sure you want to delete user "${user.fullName}" (${user.email})?`)) {
-      deleteUserMutation.mutate(user.id, {
-        onSuccess: () => showToast('User deleted successfully.', 'success'),
-        onError: (err) => showToast(err instanceof Error ? err.message : 'Delete failed.', 'error'),
-      });
+    setDeleteTarget(user);
+  };
+
+  const confirmDeleteUser = () => {
+    if (!deleteTarget) {
+      return;
     }
+
+    return new Promise<void>((resolve, reject) => {
+      deleteUserMutation.mutate(deleteTarget.id, {
+        onSuccess: () => {
+          showToast('User deleted successfully.', 'success');
+          setDeleteTarget(null);
+          resolve();
+        },
+
+        onError: (err) => {
+          const error =
+            err instanceof Error
+              ? err
+              : new Error('Delete failed.');
+
+          showToast(error.message, 'error');
+          reject(error);
+        },
+      });
+    });
   };
 
   const handleModalSubmit = (userData: {
@@ -511,6 +500,21 @@ export function UserManagement({ onShowToast }: UserManagementProps) {
         onSubmit={handleModalSubmit}
         initialUser={selectedUser}
       />
+
+      <ActionConfirmationModal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteUser}
+        action="delete"
+        title="Delete User"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete user "${deleteTarget.fullName}" (${deleteTarget.email})? This action is permanent and cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete User"
+      />
+
     </div>
   );
 }

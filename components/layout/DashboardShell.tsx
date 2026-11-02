@@ -2,12 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { AnimatePresence } from 'motion/react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
-import { LoginForm } from '@/components/auth/LoginForm';
 import { ShieldAlert } from 'lucide-react';
 
 interface DashboardShellProps {
@@ -15,7 +13,7 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ children }: DashboardShellProps) {
-  const { currentUser } = useAuth();
+  const { currentUser, isAuthLoading } = useAuth();
   const { showToast } = useToast();
   const pathname = usePathname();
   const router = useRouter();
@@ -25,75 +23,98 @@ export function DashboardShell({ children }: DashboardShellProps) {
     setIsSidebarOpen((prev) => !prev);
   };
 
-  // If user is not authenticated or logged out, show Login Form
-  if (!currentUser) {
-    return <LoginForm onShowToast={showToast} />;
-  }
+  // Redirect to login if not authenticated, or redirect root to dashboard
+  useEffect(() => {
+    // Wait for auth to finish loading before making redirect decisions
+    if (isAuthLoading) return;
 
-  // Safety fallback: if user is not admin and visits /users
-  if (currentUser.role !== 'admin' && pathname === '/users') {
+    if (!currentUser && pathname !== '/login') {
+      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+    } else if (currentUser && pathname === '/') {
+      router.replace('/dashboard');
+    }
+  }, [currentUser, pathname, router, isAuthLoading]);
+
+  // Show loading state while auth is initializing
+  if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans">
-        <Header onShowToast={showToast} isSidebarOpen={isSidebarOpen} onToggleSidebar={toggleSidebar} />
-        <main className="flex-1 max-w-[1700px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-6">
-          <AnimatePresence mode="wait">
-            {isSidebarOpen && (
-              <Sidebar onShowToast={showToast} onClose={() => setIsSidebarOpen(false)} />
-            )}
-          </AnimatePresence>
-          <div className="flex-1 min-w-0">
-            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-8 text-center flex flex-col items-center gap-3">
-              <ShieldAlert size={36} className="text-[#e11d48]" />
-              <h2 className="text-xl font-bold text-slate-900">Access Restricted</h2>
-              <p className="text-xs text-slate-600 max-w-md">
-                User Management is restricted to Admin role users. Your current active role is{' '}
-                <strong className="uppercase font-mono text-[#e11d48]">{currentUser.role}</strong>.
-              </p>
-              <button
-                onClick={() => router.push('/')}
-                className="mt-2 bg-[#e11d48] text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-rose-700 transition-colors"
-              >
-                Return to Dashboard Overview
-              </button>
-            </div>
-          </div>
-        </main>
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#f43f5e] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="mt-4 text-sm text-slate-600">Loading...</p>
+        </div>
       </div>
     );
   }
 
+  // If user is not authenticated and not on login page, show nothing while redirecting
+  if (!currentUser && pathname !== '/login') {
+    return null;
+  }
+
+  // If on login page, just render the children (login page content)
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
+
+  // At this point, we know currentUser is not null (redirected to login if null)
+  const isAccessRestricted = currentUser?.role !== 'admin' && pathname === '/users';
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans selection:bg-[#f43f5e] selection:text-white">
-      {/* Header Bar */}
+      {/* Fixed Top Header Bar */}
       <Header
         onShowToast={showToast}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={toggleSidebar}
       />
 
-      {/* Main Body */}
-      <main className="flex-1 max-w-[1700px] w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 flex flex-col lg:flex-row gap-6">
-        {/* Sidebar Navigation */}
-        <AnimatePresence mode="wait">
-          {isSidebarOpen && (
-            <Sidebar
-              onShowToast={showToast}
-              onClose={() => setIsSidebarOpen(false)}
-            />
+      {/* Fixed Left Navigation Sidebar */}
+      <Sidebar
+        onShowToast={showToast}
+        onClose={() => setIsSidebarOpen(false)}
+        isOpen={isSidebarOpen}
+      />
+
+      {/* Mobile Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 top-16 bg-slate-900/40 backdrop-blur-xs z-20 lg:hidden"
+        />
+      )}
+
+      {/* Main Layout Area - Fixed left padding ensures content position does not shift */}
+      <div className={`pt-4 ${isSidebarOpen ? 'lg:pl-68' : 'lg:pl-0'} transition-all duration-300 flex-1 flex flex-col`}>
+        <main className="flex-1 max-w-[1700px] w-full mx-auto p-4 sm:p-6 lg:p-8">
+          {isAccessRestricted ? (
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-8 text-center flex flex-col items-center gap-3">
+              <ShieldAlert size={36} className="text-[#e11d48]" />
+              <h2 className="text-xl font-bold text-slate-900">Access Restricted</h2>
+              <p className="text-xs text-slate-600 max-w-md">
+                User Management is restricted to Admin role users. Your current active role is{' '}
+                <strong className="uppercase font-mono text-[#e11d48]">{currentUser?.role}</strong>.
+              </p>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="mt-2 bg-[#e11d48] text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-rose-700 transition-colors"
+              >
+                Return to Dashboard Overview
+              </button>
+            </div>
+          ) : (
+            children
           )}
-        </AnimatePresence>
+        </main>
 
-        {/* Content Panel Area */}
-        <div className="flex-1 min-w-0">{children}</div>
-      </main>
-
-      {/* Footer copyright bar */}
-      <footer className="border-t border-slate-200 bg-white py-4 px-6 text-center text-xs text-slate-500">
-        <div className="max-w-[1700px] w-full mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div>&copy; {new Date().getFullYear()} Business Developer Inc. Enterprise Admin Platform.</div>
-          <div className="text-[0.72rem] text-slate-400">Next.js App Router • Tailwind CSS • TypeScript</div>
-        </div>
-      </footer>
+        {/* Footer copyright bar */}
+        <footer className="border-t border-slate-200/90 bg-white py-4 px-12 text-center text-xs text-slate-500 mt-auto">
+          <div className="max-w-[1700px] w-full mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div>&copy; {new Date().getFullYear()} Business Developer Inc. Enterprise Admin Platform.</div>
+            <div className="text-[0.72rem] text-slate-400">Next.js App Router • Tailwind CSS • TypeScript</div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
